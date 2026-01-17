@@ -102,7 +102,11 @@ async def analyze_audio(file: UploadFile = File(...)):
             classification=classification,
             confidence=confidence,
             risk_score=round(risk_score, 2),
-            prediction=prediction,
+            prediction={
+                "fake_probability": synthetic_prob,
+                "real_probability": 1.0 - synthetic_prob,
+                "synthetic_probability": synthetic_prob # Keep orig Key likely used by nothing but good practice
+            },
             audio_features=audio_features,
             processing_time_ms=processing_time
         )

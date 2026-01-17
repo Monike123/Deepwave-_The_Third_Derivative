@@ -1,30 +1,132 @@
-# Dependencies
-node_modules/
-.venv/
-__pycache__/
-*.pyc
-.env
+# ========================================
+# Deepwave - Git Ignore Configuration
+# ========================================
 
-# Large model files (>50MB - download separately)
-*.onnx.data
+# ============ Python ============
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ============ Virtual Environment ============
+.venv/
+venv/
+ENV/
+env/
+
+# ============ IDE ============
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ============ Model Weights & Caches ============
+# DeepFace cache (contains downloaded pretrained models)
+.deepface/
+
+# ONNX models and weights
+*.onnx
+*.pt
+*.pth
+*.h5
+*.hdf5
+*.weights
+*.pb
+*.tflite
+*.bin
+
+# Model directories (keep placeholders)
+backend/data/models/*.onnx
+backend/data/models/*.pt
+backend/data/models/*.weights
 Models/*.onnx.data
 Models.zip
 
-# IDE
-.vscode/
-.idea/
+# ============ Data & Uploads ============
+backend/data/uploads/
+backend/data/temp/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
 
-# Build
-dist/
-build/
-*.egg-info/
+# ============ Environment & Secrets ============
+.env
+.env.local
+.env.*.local
+*.env
+secrets.json
+credentials.json
 
-# Logs
+# API Keys (never commit these)
+*api_key*
+*secret*
+
+# ============ Logs & Debug ============
 *.log
+logs/
+*.debug
+debug_*.py
+test_*.py
+check_*.py
+response.json
+test_result.json
 
-# OS
-.DS_Store
-Thumbs.db
+# ============ Node.js / Frontend ============
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# Frontend build
+# Build outputs
 frontend/dist/
+frontend/build/
+
+# ============ Jupyter Notebooks ============
+.ipynb_checkpoints/
+*.ipynb
+
+# ============ Training Artifacts ============
+training/runs/
+training/checkpoints/
+training/logs/
+*.tfevents*
+wandb/
+
+# ============ Large Files ============
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# ============ Temporary Files ============
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+
+# ============ System Files ============
+Thumbs.db
+.DS_Store
+Desktop.ini

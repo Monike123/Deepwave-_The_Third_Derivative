@@ -1,0 +1,11 @@
+# Face Recognition Model Placeholder
+# This file represents the custom face recognition model weights
+
+# Model Architecture: Custom CNN-based embedding network
+# Training: Trained on proprietary dataset
+# Version: 1.0.0
+
+# The actual weights file should be named: face_recognition_v1.weights
+# Place in this directory before running the application
+
+# DO NOT COMMIT ACTUAL MODEL WEIGHTS TO GIT

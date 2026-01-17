@@ -38,6 +38,9 @@ class ImageAnalysisResponse(BaseModel):
     confidence: str = Field(description="LOW, MEDIUM, or HIGH")
     risk_score: float = Field(ge=0, le=100)
     
+    # Prediction details (Added for frontend compatibility)
+    prediction: Dict[str, float] = Field(default_factory=lambda: {"fake_probability": 0.0, "real_probability": 0.0})
+    
     # Detailed signals
     signals: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
     
@@ -57,6 +60,7 @@ class FrameAnalysis(BaseModel):
     timestamp_seconds: float
     risk_score: float
     classification: str
+    detailed_label: Optional[str] = None
     faces_detected: int
 
 
@@ -76,8 +80,14 @@ class VideoAnalysisResponse(BaseModel):
     risk_score: float = Field(ge=0, le=100)
     average_risk_score: float
     
+    # Prediction details (Added for frontend compatibility)
+    prediction: Dict[str, float] = Field(default_factory=lambda: {"fake_probability": 0.0, "real_probability": 0.0})
+    
     # Frame-level analysis
     frame_analysis: List[FrameAnalysis] = Field(default_factory=list)
+    
+    # Detailed signals (for frontend compatibility - same as ImageAnalysisResponse)
+    signals: Dict[str, Any] = Field(default_factory=dict)
     
     # Additional signals
     temporal_consistency: Optional[str] = None

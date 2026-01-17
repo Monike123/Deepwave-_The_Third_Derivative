@@ -1,225 +1,248 @@
-"""Forensic Analyzer Service using extracted image features."""
-import numpy as np
+"""
+Forensic Analyzer Service - Frequency Domain Analysis
+"""
 import cv2
+import numpy as np
 import onnxruntime as ort
-from scipy import fftpack
-from scipy.stats import entropy
+import os
 import joblib
-from typing import Optional, Dict, Any, List
 import logging
-from pathlib import Path
-
+import base64
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-
-class ForensicAnalyzerService:
-    """Service for forensic feature analysis of images."""
-    
-    # Feature names for explainability
-    FEATURE_NAMES = [
-        'high_freq_ratio', 'spectral_entropy', 'magnitude_mean', 'magnitude_std',
-        'noise_variance', 'noise_mean', 'noise_var_r', 'noise_var_g',
-        'noise_var_b', 'noise_var_ratio', 'sharpness', 'edge_density'
-    ]
+class ForensicAnalyzer:
+    """
+    Analyzes images in the frequency domain (DCT/DFT) to detect
+    GAN fingerprints and upsampling artifacts common in deepfakes.
+    """
     
     def __init__(self):
-        self.session: Optional[ort.InferenceSession] = None
+        self.model_path = os.path.join(settings.MODELS_DIR, "forensic_classifier.onnx")
+        self.scaler_path = os.path.join(settings.MODELS_DIR, "forensic_scaler.pkl")
+        self.session = None
         self.scaler = None
-        self._loaded = False
-        
-    def load_model(self) -> bool:
-        """Load forensic classifier and scaler."""
-        model_path = settings.MODELS_DIR / settings.FORENSIC_CLASSIFIER_PATH
-        scaler_path = settings.MODELS_DIR / settings.FORENSIC_SCALER_PATH
-        
-        # Try alternative paths
-        if not model_path.exists():
-            model_path = Path("d:/Deepway/Models") / settings.FORENSIC_CLASSIFIER_PATH
-        if not scaler_path.exists():
-            scaler_path = Path("d:/Deepway/Models") / settings.FORENSIC_SCALER_PATH
-        
+        self.input_name = None
+        self.output_name = None
+        self._load_model()
+
+    def _load_model(self):
         try:
-            if model_path.exists():
-                providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] \
-                           if settings.USE_GPU else ['CPUExecutionProvider']
-                self.session = ort.InferenceSession(str(model_path), providers=providers)
-                logger.info(f"Forensic classifier loaded from {model_path}")
-            else:
-                logger.warning(f"Forensic classifier not found at {model_path}")
-                
-            if scaler_path.exists():
-                self.scaler = joblib.load(scaler_path)
-                logger.info(f"Forensic scaler loaded from {scaler_path}")
-            else:
-                logger.warning(f"Forensic scaler not found at {scaler_path}")
+            # Load ONNX model
+            if not os.path.exists(self.model_path):
+                logger.warning(f"Forensic model not found at {self.model_path}")
+                return
+
+            providers = ['CPUExecutionProvider'] # Force CPU for stability
+            self.session = ort.InferenceSession(self.model_path, providers=providers)
+            self.input_name = self.session.get_inputs()[0].name
+            self.output_name = self.session.get_outputs()[0].name
             
-            self._loaded = self.session is not None and self.scaler is not None
-            return self._loaded
+            # Load Scaler
+            if os.path.exists(self.scaler_path):
+                self.scaler = joblib.load(self.scaler_path)
+            
+            logger.info(f"Forensic analyzer loaded from {self.model_path}")
             
         except Exception as e:
             logger.error(f"Failed to load forensic analyzer: {e}")
-            self._loaded = False
-            return False
-    
+            self.session = None
+
+    def load_model(self) -> bool:
+        """Public method to load model (called by main.py on startup)."""
+        if self.session is None:
+            self._load_model()
+        return self.session is not None
+
     def is_loaded(self) -> bool:
-        """Check if model is loaded."""
-        return self._loaded
-    
-    def extract_fft_features(self, image: np.ndarray) -> Dict[str, float]:
-        """Extract frequency domain features using FFT."""
-        # Convert to grayscale
-        if len(image.shape) == 3:
-            gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        else:
-            gray = image
+        return self.session is not None
+
+    def azimuthalAverage(self, image, center=None):
+        """
+        Calculate the azimuthally averaged radial profile.
+        image - The 2D image
+        center - The [x,y] pixel coordinates used as the center. The default is 
+             None, which then uses the center of the image
+        """
+        # Calculate the indices from the image
+        y, x = np.indices(image.shape)
+
+        if not center:
+            center = np.array([(x.max()-x.min())/2.0, (y.max()-y.min())/2.0])
+
+        r = np.hypot(x - center[0], y - center[1])
+
+        # Get sorted radii
+        ind = np.argsort(r.flat)
+        r_sorted = r.flat[ind]
+        i_sorted = image.flat[ind]
+
+        # Get the integer part of the radii (bin size = 1)
+        r_int = r_sorted.astype(int)
+
+        # Find all pixels that fall within each radial bin.
+        deltar = r_int[1:] - r_int[:-1]  # Assumes all radii represented
+        rind = np.where(deltar)[0]       # location of changed radius
+        nr = rind[1:] - rind[:-1]        # number of radius bin
         
-        # Resize for consistent analysis
-        gray = cv2.resize(gray, (256, 256))
-        
-        # 2D FFT
-        f_transform = fftpack.fft2(gray)
-        f_shift = fftpack.fftshift(f_transform)
-        magnitude = np.abs(f_shift)
-        
-        # High frequency ratio (energy in outer regions vs total)
-        h, w = magnitude.shape
-        center_h, center_w = h // 2, w // 2
-        low_freq = magnitude[center_h-h//4:center_h+h//4, center_w-w//4:center_w+w//4]
-        high_freq_ratio = 1 - (np.sum(low_freq) / (np.sum(magnitude) + 1e-10))
-        
-        # Spectral entropy
-        magnitude_flat = magnitude.flatten()
-        magnitude_norm = magnitude_flat / (np.sum(magnitude_flat) + 1e-10)
-        spectral_entropy_val = entropy(magnitude_norm + 1e-10)
-        
-        return {
-            'high_freq_ratio': float(high_freq_ratio),
-            'spectral_entropy': float(spectral_entropy_val),
-            'magnitude_mean': float(np.mean(magnitude)),
-            'magnitude_std': float(np.std(magnitude))
-        }
-    
-    def extract_noise_features(self, image: np.ndarray) -> Dict[str, float]:
-        """Extract noise residual features."""
-        # Use Gaussian blur instead of NLMeans for speed
-        image_resized = cv2.resize(image, (256, 256))
-        blurred = cv2.GaussianBlur(image_resized, (5, 5), 0)
-        noise = image_resized.astype(np.float32) - blurred.astype(np.float32)
-        
-        # Overall noise statistics
-        noise_var = float(np.var(noise))
-        noise_mean = float(np.mean(np.abs(noise)))
-        
-        # Per-channel variance
-        noise_var_r = float(np.var(noise[:, :, 0]))
-        noise_var_g = float(np.var(noise[:, :, 1]))
-        noise_var_b = float(np.var(noise[:, :, 2]))
-        
-        # Ratio of max to min channel variance
-        min_var = min(noise_var_r, noise_var_g, noise_var_b)
-        max_var = max(noise_var_r, noise_var_g, noise_var_b)
-        noise_var_ratio = max_var / (min_var + 1e-10)
-        
-        return {
-            'noise_variance': noise_var,
-            'noise_mean': noise_mean,
-            'noise_var_r': noise_var_r,
-            'noise_var_g': noise_var_g,
-            'noise_var_b': noise_var_b,
-            'noise_var_ratio': float(noise_var_ratio)
-        }
-    
-    def extract_quality_features(self, image: np.ndarray) -> Dict[str, float]:
-        """Extract image quality features."""
-        # Convert to grayscale
-        if len(image.shape) == 3:
-            gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        else:
-            gray = image
-        
-        gray = cv2.resize(gray, (256, 256))
-        
-        # Sharpness (Laplacian variance)
-        laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-        
-        # Edge density
-        edges = cv2.Canny(gray, 100, 200)
-        edge_density = np.mean(edges) / 255.0
-        
-        return {
-            'sharpness': float(laplacian_var),
-            'edge_density': float(edge_density)
-        }
-    
-    def extract_all_features(self, image: np.ndarray) -> Dict[str, float]:
-        """Extract all forensic features from an image."""
-        features = {}
-        features.update(self.extract_fft_features(image))
-        features.update(self.extract_noise_features(image))
-        features.update(self.extract_quality_features(image))
-        return features
-    
-    def analyze(self, image: np.ndarray) -> Dict[str, Any]:
-        """Full forensic analysis of an image."""
-        # Extract features
-        features = self.extract_all_features(image)
-        
-        result = {
-            'features': features,
-            'prediction': None,
-            'feature_importance': {}
-        }
-        
-        if not self._loaded:
-            # Return features only, with default prediction
-            result['error'] = 'Model not loaded - returning features only'
-            result['prediction'] = {'fake_probability': 0.5, 'real_probability': 0.5}
-            return result
-        
+        # Cumulative sum to figure out sums for each radius bin
+        csim = np.cumsum(i_sorted, dtype=float)
+        tbin = csim[rind[1:]] - csim[rind[:-1]]
+
+        radial_prof = tbin / nr
+
+        return radial_prof
+
+    def extract_features(self, img_bgr):
+        """Extract frequency domain features from image."""
         try:
-            # Prepare feature vector in correct order
-            feature_vector = np.array([[
-                features.get(name, 0.0) for name in self.FEATURE_NAMES
-            ]], dtype=np.float32)
+            # Convert to grayscale
+            img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             
-            # Scale features
-            feature_vector_scaled = self.scaler.transform(feature_vector)
+            # Resize
+            h, w = img_gray.shape
+            min_dim = min(h, w)
+            if min_dim > 720: # Cap size for performance
+                scale = 720 / min_dim
+                img_gray = cv2.resize(img_gray, None, fx=scale, fy=scale)
+            
+            f = np.fft.fft2(img_gray)
+            fshift = np.fft.fftshift(f)
+            magnitude_spectrum = 20 * np.log(np.abs(fshift) + 1e-8)
+            
+            # Azimuthal average
+            psd1D = self.azimuthalAverage(magnitude_spectrum)
+            
+            # Normalize to fixed length (e.g. 300 points)
+            target_len = 300
+            if len(psd1D) != target_len:
+                psd1D = np.interp(np.linspace(0, len(psd1D), target_len), np.arange(len(psd1D)), psd1D)
+            
+            # Scale if scaler is available
+            if self.scaler:
+                psd1D = self.scaler.transform([psd1D])[0]
+                
+            return psd1D.astype(np.float32)
+            
+        except Exception as e:
+            logger.error(f"Feature extraction failed: {e}")
+            return None
+
+    def _generate_ela(self, image: np.ndarray, quality: int = 90) -> str:
+        """Generate Error Level Analysis (ELA) image."""
+        try:
+            _, buffer = cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, quality])
+            ela_img = cv2.imdecode(buffer, cv2.IMREAD_COLOR)
+            
+            diff = 15 * cv2.absdiff(image, ela_img)
+            
+            # Enhance contrast
+            diff = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+            diff = clahe.apply(diff)
+            diff = cv2.applyColorMap(diff, cv2.COLORMAP_JET)
+            
+            _, buf = cv2.imencode('.jpg', diff)
+            return base64.b64encode(buf).decode('utf-8')
+        except Exception as e:
+            logger.error(f"ELA generation failed: {e}")
+            return None
+
+    def _generate_spectrum_plot(self, img_gray: np.ndarray) -> str:
+        """Generate visual frequency spectrum plot."""
+        try:
+            f = np.fft.fft2(img_gray)
+            fshift = np.fft.fftshift(f)
+            magnitude_spectrum = 20 * np.log(np.abs(fshift) + 1e-8)
+            
+            # Normalize to 0-255
+            mag_norm = cv2.normalize(magnitude_spectrum, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+            mag_color = cv2.applyColorMap(mag_norm, cv2.COLORMAP_INFERNO)
+            
+            _, buf = cv2.imencode('.jpg', mag_color)
+            return base64.b64encode(buf).decode('utf-8')
+        except Exception as e:
+            logger.error(f"Spectrum plot failed: {e}")
+            return None
+
+    def analyze(self, image: np.ndarray) -> dict:
+        """
+        Analyze image for frequency anomalies and generate forensic report.
+        """
+        try:
+            # Always generate visualizations
+            import base64
+            img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            
+            ela_b64 = self._generate_ela(image)
+            spectrum_b64 = self._generate_spectrum_plot(img_gray)
+            
+            if not self.is_loaded():
+                # Return neutral result but valid plots
+                return {
+                    "risk_score": 50.0,
+                    "prediction": { "fake_probability": 0.5, "real_probability": 0.5 },
+                    "classification": "UNKNOWN",
+                    "method": "Frequency Domain Analysis",
+                    "plots": {
+                        "ela": ela_b64,
+                        "spectrum": spectrum_b64
+                    },
+                    "details": {
+                        "ela_explanation": "Error Level Analysis generated (Model missing for classification).",
+                        "spectrum_explanation": "Frequency spectrum generated."
+                    }
+                }
+
+            # Extract features
+            features = self.extract_features(image)
+            
+            if features is None:
+                return {"error": "Feature extraction failed"}
+            
+            # Add batch dimension
+            input_tensor = np.expand_dims(features, axis=0)
             
             # Run inference
-            input_name = self.session.get_inputs()[0].name
-            output_name = self.session.get_outputs()[0].name
+            probs = self.session.run(
+                [self.output_name],
+                {self.input_name: input_tensor}
+            )[0][0]
             
-            outputs = self.session.run(
-                [output_name], 
-                {input_name: feature_vector_scaled.astype(np.float32)}
-            )
-            logits = outputs[0][0]
+            # Helper for probabilities
+            if isinstance(probs, np.ndarray) and len(probs) == 2:
+                exp_probs = np.exp(probs - np.max(probs))
+                probs = exp_probs / exp_probs.sum()
+                real_prob = float(probs[0])
+                fake_prob = float(probs[1])
+            else:
+                 fake_prob = float(probs)
+                 real_prob = 1.0 - fake_prob
             
-            # Softmax
-            exp_logits = np.exp(logits - np.max(logits))
-            probs = exp_logits / exp_logits.sum()
+            risk_score = fake_prob * 100
             
-            fake_prob = float(probs[1]) if len(probs) > 1 else float(probs[0])
-            
-            result['prediction'] = {
-                'fake_probability': fake_prob,
-                'real_probability': 1.0 - fake_prob
+            return {
+                "risk_score": round(risk_score, 2),
+                "prediction": {
+                    "fake_probability": round(fake_prob, 4),
+                    "real_probability": round(real_prob, 4)
+                },
+                "classification": "MANIPULATED" if risk_score > 50 else "AUTHENTIC",
+                "method": "Frequency Domain Analysis",
+                "plots": {
+                    "ela": ela_b64,
+                    "spectrum": spectrum_b64
+                },
+                "details": {
+                    "ela_explanation": "Error Level Analysis shows compression artifact inconsistencies. High contrast areas indicate potential manipulation.",
+                    "spectrum_explanation": "Frequency spectrum analysis detects upsampling artifacts common in GAN-generated faces."
+                }
             }
-            
-            # Feature importance (deviation from mean in scaled space)
-            for i, name in enumerate(self.FEATURE_NAMES):
-                deviation = abs(feature_vector_scaled[0][i])
-                result['feature_importance'][name] = float(deviation)
             
         except Exception as e:
             logger.error(f"Forensic analysis failed: {e}")
-            result['error'] = str(e)
-            result['prediction'] = {'fake_probability': 0.5, 'real_probability': 0.5}
-        
-        return result
+            return {"error": str(e)}
 
-
-# Singleton instance
-forensic_analyzer = ForensicAnalyzerService()
+# Singleton
+forensic_analyzer = ForensicAnalyzer()

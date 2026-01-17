@@ -1,0 +1,916 @@
+{
+  "system_context": {
+    "project_name": "Deepfake Detector Enhanced Frontend",
+    "target_model": "Claude Opus 4.5",
+    "implementation_scope": "Full UI/UX enhancement with 3D/2D animations, glassmorphic design, and modern color palette",
+    "critical_constraint": "Preserve all existing code logic, API pipelines, database schemas, and backend functionality",
+    "estimated_implementation_time": "4-6 hours",
+    "total_lines_of_code_to_write": "2500-3500 lines"
+  },
+
+  "project_structure_analysis": {
+    "description": "Before implementing any changes, understand the complete project structure to avoid breaking existing functionality",
+    "steps": [
+      {
+        "step_number": 1,
+        "title": "Audit Existing Project Structure",
+        "instructions": "Run the following commands to understand your current project layout and identify all existing code that must be preserved",
+        "commands": [
+          "find . -type f -name '*.tsx' -o -name '*.ts' -o -name '*.jsx' -o -name '*.js' | grep -v node_modules | sort",
+          "find . -type f -name '*.css' -o -name '*.scss' | grep -v node_modules | sort",
+          "find . -type d -maxdepth 3 | grep -v node_modules | sort",
+          "cat package.json | grep -A 50 'dependencies'",
+          "cat tsconfig.json",
+          "cat vite.config.ts 2>/dev/null || cat vite.config.js 2>/dev/null || echo 'No vite config found'"
+        ],
+        "expected_output": "Complete list of existing files, dependencies, and configuration",
+        "critical_notes": [
+          "Document all existing API endpoints currently being used",
+          "Identify all custom hooks and utilities that must be preserved",
+          "Note all existing state management solutions (Redux, Zustand, Context API)",
+          "List all custom CSS classes and their purposes",
+          "Identify any third-party integrations (payment, auth, analytics)"
+        ]
+      },
+      {
+        "step_number": 2,
+        "title": "Map Existing Component Dependencies",
+        "instructions": "Create a dependency map of all existing components to understand how they interact",
+        "actions": [
+          "For each existing component, identify: imports, exports, props interface, state management",
+          "Document all API calls and their endpoints",
+          "List all context providers and their consumers",
+          "Identify all custom hooks and their dependencies",
+          "Note all global state management patterns"
+        ],
+        "preservation_checklist": [
+          "✓ Do not modify existing component props interfaces unless absolutely necessary",
+          "✓ Do not change existing API endpoint paths",
+          "✓ Do not alter existing state management structure",
+          "✓ Do not remove any existing utility functions",
+          "✓ Do not change existing routing structure"
+        ]
+      }
+    ]
+  },
+
+  "design_system_implementation": {
+    "description": "Implement the new design system while preserving existing functionality",
+    "phase": "Phase 1: Design Tokens & Global Styles",
+    "steps": [
+      {
+        "step_number": 3,
+        "title": "Create New Design Token System",
+        "file_path": "src/styles/design-tokens.css",
+        "instructions": "Create a new CSS file for design tokens that extends (not replaces) existing styles",
+        "content_structure": {
+          "section_1": {
+            "name": "CSS Custom Properties (Variables)",
+            "description": "Define all design tokens as CSS variables for easy theming",
+            "code_example": ":root {\n  /* Primary Colors */\n  --color-primary: #00d9ff;\n  --color-primary-foreground: #0f1419;\n  --color-secondary: #a855f7;\n  --color-secondary-foreground: #f5f5f5;\n  \n  /* Background Colors */\n  --color-background: #0f1419;\n  --color-surface: rgba(15, 20, 25, 0.7);\n  --color-surface-dark: rgba(15, 20, 25, 0.9);\n  \n  /* Text Colors */\n  --color-text-primary: #e2e8f0;\n  --color-text-secondary: #cbd5e1;\n  --color-text-muted: #94a3b8;\n  \n  /* Status Colors */\n  --color-success: #10b981;\n  --color-warning: #f59e0b;\n  --color-error: #ef4444;\n  --color-info: #3b82f6;\n  \n  /* Borders & Inputs */\n  --color-border: rgba(0, 217, 255, 0.2);\n  --color-border-light: rgba(0, 217, 255, 0.1);\n  --color-input-bg: rgba(0, 217, 255, 0.05);\n  \n  /* Spacing Scale */\n  --spacing-xs: 4px;\n  --spacing-sm: 8px;\n  --spacing-md: 12px;\n  --spacing-lg: 16px;\n  --spacing-xl: 24px;\n  --spacing-2xl: 32px;\n  --spacing-3xl: 48px;\n  --spacing-4xl: 64px;\n  \n  /* Border Radius */\n  --radius-sm: 4px;\n  --radius-md: 8px;\n  --radius-lg: 12px;\n  --radius-xl: 16px;\n  --radius-full: 9999px;\n  \n  /* Shadows */\n  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);\n  --shadow-md: 0 4px 6px rgba(0, 217, 255, 0.1);\n  --shadow-lg: 0 10px 15px rgba(0, 217, 255, 0.15);\n  --shadow-xl: 0 20px 25px rgba(0, 217, 255, 0.2);\n  \n  /* Typography */\n  --font-family-display: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n  --font-family-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n  \n  --font-size-xs: 12px;\n  --font-size-sm: 14px;\n  --font-size-base: 16px;\n  --font-size-lg: 18px;\n  --font-size-xl: 20px;\n  --font-size-2xl: 24px;\n  --font-size-3xl: 32px;\n  --font-size-4xl: 48px;\n  \n  --font-weight-light: 300;\n  --font-weight-normal: 400;\n  --font-weight-medium: 500;\n  --font-weight-semibold: 600;\n  --font-weight-bold: 700;\n  --font-weight-extrabold: 800;\n  \n  /* Line Heights */\n  --line-height-tight: 1.2;\n  --line-height-normal: 1.5;\n  --line-height-relaxed: 1.75;\n  \n  /* Transitions */\n  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);\n  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);\n  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);\n  \n  /* Z-Index Scale */\n  --z-dropdown: 1000;\n  --z-sticky: 1020;\n  --z-fixed: 1030;\n  --z-modal-backdrop: 1040;\n  --z-modal: 1050;\n  --z-popover: 1060;\n  --z-tooltip: 1070;\n}",
+            "critical_notes": [
+              "Use CSS custom properties (variables) instead of hardcoding values",
+              "All colors use RGBA for transparency support",
+              "Spacing follows 4px base unit system",
+              "Transitions use cubic-bezier for smooth animations",
+              "Z-index values prevent stacking conflicts"
+            ]
+          },
+          "section_2": {
+            "name": "Import Strategy",
+            "description": "How to import these tokens in your existing CSS",
+            "code_example": "/* At the top of your main CSS file, BEFORE any existing styles */\n@import './design-tokens.css';\n\n/* Then import existing styles */\n@import './existing-styles.css';\n\n/* Then import new component styles */\n@import './components/new-components.css';",
+            "critical_notes": [
+              "Import order matters - tokens must come first",
+              "Do not remove or modify existing CSS imports",
+              "Use @layer directive to organize cascade"
+            ]
+          }
+        ],
+        "preservation_rules": [
+          "Do NOT delete existing CSS files",
+          "Do NOT modify existing color values unless they conflict with new design",
+          "Do NOT change existing spacing values in working components",
+          "Do NOT alter existing font families unless explicitly requested"
+        ]
+      },
+      {
+        "step_number": 4,
+        "title": "Extend Existing Tailwind Configuration",
+        "file_path": "tailwind.config.ts or tailwind.config.js",
+        "instructions": "Extend Tailwind config with new design tokens without breaking existing utilities",
+        "code_example": "export default {\n  content: [\n    './index.html',\n    './src/**/*.{js,ts,jsx,tsx}',\n  ],\n  theme: {\n    extend: {\n      colors: {\n        primary: {\n          DEFAULT: '#00d9ff',\n          50: '#f0f9ff',\n          100: '#e0f2fe',\n          200: '#bae6fd',\n          300: '#7dd3fc',\n          400: '#38bdf8',\n          500: '#0ea5e9',\n          600: '#0284c7',\n          700: '#0369a1',\n          800: '#075985',\n          900: '#0c3d66',\n        },\n        secondary: {\n          DEFAULT: '#a855f7',\n          50: '#faf5ff',\n          100: '#f3e8ff',\n          200: '#e9d5ff',\n          300: '#d8b4fe',\n          400: '#c084fc',\n          500: '#a855f7',\n          600: '#9333ea',\n          700: '#7e22ce',\n          800: '#6b21a8',\n          900: '#581c87',\n        },\n        background: '#0f1419',\n        foreground: '#e2e8f0',\n        surface: 'rgba(15, 20, 25, 0.7)',\n        success: '#10b981',\n        warning: '#f59e0b',\n        error: '#ef4444',\n      },\n      fontFamily: {\n        display: ['Sora', 'system-ui'],\n        body: ['Inter', 'system-ui'],\n      },\n      spacing: {\n        xs: '4px',\n        sm: '8px',\n        md: '12px',\n        lg: '16px',\n        xl: '24px',\n        '2xl': '32px',\n        '3xl': '48px',\n        '4xl': '64px',\n      },\n      borderRadius: {\n        sm: '4px',\n        md: '8px',\n        lg: '12px',\n        xl: '16px',\n      },\n      boxShadow: {\n        sm: '0 1px 2px rgba(0, 0, 0, 0.05)',\n        md: '0 4px 6px rgba(0, 217, 255, 0.1)',\n        lg: '0 10px 15px rgba(0, 217, 255, 0.15)',\n        xl: '0 20px 25px rgba(0, 217, 255, 0.2)',\n        glow: '0 0 20px rgba(0, 217, 255, 0.5)',\n      },\n      animation: {\n        float: 'float 6s ease-in-out infinite',\n        'glow-pulse': 'glow-pulse 2s ease-in-out infinite',\n        'scan-lines': 'scan-lines 2s infinite',\n      },\n      keyframes: {\n        float: {\n          '0%, 100%': { transform: 'translateY(0px)' },\n          '50%': { transform: 'translateY(-20px)' },\n        },\n        'glow-pulse': {\n          '0%, 100%': { boxShadow: '0 0 20px rgba(0, 217, 255, 0.3)' },\n          '50%': { boxShadow: '0 0 40px rgba(0, 217, 255, 0.6)' },\n        },\n        'scan-lines': {\n          '0%': { transform: 'translateY(-100%)' },\n          '100%': { transform: 'translateY(100%)' },\n        },\n      },\n      backdropBlur: {\n        xs: '2px',\n        sm: '4px',\n        md: '8px',\n        lg: '12px',\n        xl: '16px',\n      },\n    },\n  },\n  plugins: [\n    require('tailwindcss-animate'),\n  ],\n}",
+        "critical_notes": [
+          "Use 'extend' key to add new utilities without removing existing ones",
+          "Do NOT replace the entire theme object",
+          "Keep all existing Tailwind configurations intact",
+          "Add new animations without removing existing ones"
+        ]
+      }
+    ]
+  },
+
+  "component_creation_strategy": {
+    "description": "Create new UI components while preserving existing component functionality",
+    "phase": "Phase 2: Create New Components",
+    "critical_rules": [
+      "Each new component must be in a separate file",
+      "Do NOT modify existing component files unless necessary",
+      "Use TypeScript interfaces for type safety",
+      "Export components as default exports",
+      "Add JSDoc comments to all components",
+      "Keep components focused and single-responsibility"
+    ],
+    "components": [
+      {
+        "component_name": "AnimatedOrbs",
+        "file_path": "src/components/AnimatedOrbs.tsx",
+        "purpose": "Floating gradient orbs for background animation",
+        "dependencies": ["framer-motion"],
+        "props": {},
+        "code_structure": {
+          "imports": "import { motion } from 'framer-motion';",
+          "component_type": "Functional Component",
+          "animation_type": "Framer Motion variants",
+          "exports": "export default function AnimatedOrbs() { ... }",
+          "key_features": [
+            "Four animated orbs with different gradients",
+            "Staggered animation timings",
+            "GPU-accelerated transforms",
+            "Fixed positioning (does not affect layout)",
+            "Pointer-events-none (does not interfere with interactions)"
+          ]
+        },
+        "integration_notes": [
+          "Place this component at the root level of your layout",
+          "It should be positioned fixed and cover entire viewport",
+          "Does not accept any props - fully self-contained",
+          "Can be used in multiple pages without conflicts"
+        ]
+      },
+      {
+        "component_name": "Navigation",
+        "file_path": "src/components/Navigation.tsx",
+        "purpose": "Premium navigation bar with glassmorphic styling",
+        "dependencies": ["framer-motion", "lucide-react", "existing Button component"],
+        "props": {
+          "onLogoClick": "() => void (optional)",
+          "navItems": "Array<{ label: string; href: string }> (optional)",
+          "onNavItemClick": "(href: string) => void (optional)"
+        },
+        "integration_strategy": {
+          "step_1": "Check if you have existing Navigation component",
+          "step_2": "If yes, extract its logic and props",
+          "step_3": "Create new Navigation that extends existing functionality",
+          "step_4": "Ensure all existing nav items are preserved",
+          "step_5": "Add new styling without changing behavior"
+        },
+        "code_pattern": "export interface NavigationProps {\n  items?: NavItem[];\n  onItemClick?: (href: string) => void;\n  logo?: React.ReactNode;\n}\n\nexport default function Navigation(props: NavigationProps) {\n  const { items = defaultItems, onItemClick, logo } = props;\n  // Implementation preserves existing logic\n}",
+        "critical_notes": [
+          "Must accept existing nav items as props",
+          "Should not break existing routing",
+          "Mobile menu should not interfere with existing mobile layouts",
+          "Preserve all existing onClick handlers"
+        ]
+      },
+      {
+        "component_name": "HeroSection",
+        "file_path": "src/components/HeroSection.tsx",
+        "purpose": "Main hero section with animated title and CTA",
+        "dependencies": ["framer-motion", "lucide-react", "Button component"],
+        "props": {
+          "title": "string (optional)",
+          "subtitle": "string (optional)",
+          "ctaText": "string (optional)",
+          "onCTAClick": "() => void (optional)",
+          "stats": "Array<{ number: string; label: string }> (optional)"
+        },
+        "integration_strategy": {
+          "step_1": "Check for existing hero section",
+          "step_2": "Extract existing content and data",
+          "step_3": "Create new hero that accepts existing data as props",
+          "step_4": "Ensure CTA buttons trigger existing handlers",
+          "step_5": "Preserve all existing API calls"
+        },
+        "code_pattern": "export interface HeroSectionProps {\n  title?: string;\n  subtitle?: string;\n  stats?: Array<{ number: string; label: string }>;\n  onCTAClick?: () => void;\n  ctaText?: string;\n}\n\nexport default function HeroSection(props: HeroSectionProps) {\n  const { title = 'Default Title', onCTAClick, ...rest } = props;\n  // Implementation accepts optional props with defaults\n}",
+        "critical_notes": [
+          "Make all content customizable via props",
+          "CTA buttons should call existing handlers",
+          "Do not hardcode any business logic",
+          "Stats should be configurable"
+        ]
+      },
+      {
+        "component_name": "FeatureCard",
+        "file_path": "src/components/FeatureCard.tsx",
+        "purpose": "Reusable card for displaying features",
+        "dependencies": ["framer-motion", "lucide-react"],
+        "props": {
+          "icon": "LucideIcon",
+          "title": "string",
+          "description": "string",
+          "onClick": "() => void (optional)",
+          "index": "number (optional)"
+        },
+        "code_pattern": "interface FeatureCardProps {\n  icon: LucideIcon;\n  title: string;\n  description: string;\n  onClick?: () => void;\n  index?: number;\n}\n\nexport default function FeatureCard(props: FeatureCardProps) {\n  const { icon: Icon, title, description, onClick, index = 0 } = props;\n  // Implementation\n}",
+        "critical_notes": [
+          "Fully customizable via props",
+          "Optional onClick handler for existing features",
+          "Index prop for staggered animations",
+          "No hardcoded data"
+        ]
+      },
+      {
+        "component_name": "FeaturesSection",
+        "file_path": "src/components/FeaturesSection.tsx",
+        "purpose": "Grid of feature cards",
+        "dependencies": ["FeatureCard", "framer-motion"],
+        "props": {
+          "features": "Array<FeatureData>",
+          "title": "string (optional)",
+          "subtitle": "string (optional)"
+        },
+        "integration_strategy": {
+          "step_1": "Check if you have existing features list",
+          "step_2": "Extract feature data structure",
+          "step_3": "Create component that accepts features as prop",
+          "step_4": "Ensure data format compatibility",
+          "step_5": "Map existing features to new component"
+        }
+      },
+      {
+        "component_name": "AnalysisSection",
+        "file_path": "src/components/AnalysisSection.tsx",
+        "purpose": "Demonstrates analysis process with animated elements",
+        "dependencies": ["framer-motion", "lucide-react"],
+        "props": {
+          "steps": "Array<StepData> (optional)",
+          "results": "AnalysisResult (optional)",
+          "onStepClick": "(stepIndex: number) => void (optional)"
+        },
+        "integration_strategy": {
+          "step_1": "Check existing analysis/results display",
+          "step_2": "Extract data structure from existing components",
+          "step_3": "Create component that accepts analysis data as props",
+          "step_4": "Ensure compatibility with existing API responses",
+          "step_5": "Connect to existing result handlers"
+        },
+        "critical_notes": [
+          "Must work with existing analysis data format",
+          "Should display real data from your backend",
+          "Do not hardcode example data in production",
+          "Preserve existing result display logic"
+        ]
+      },
+      {
+        "component_name": "CTASection",
+        "file_path": "src/components/CTASection.tsx",
+        "purpose": "Final call-to-action section",
+        "dependencies": ["framer-motion", "Button component"],
+        "props": {
+          "heading": "string (optional)",
+          "description": "string (optional)",
+          "primaryCTA": "{ text: string; onClick: () => void }",
+          "secondaryCTA": "{ text: string; onClick: () => void } (optional)"
+        },
+        "critical_notes": [
+          "CTA buttons must trigger existing handlers",
+          "All text should be customizable",
+          "Should not break existing routing"
+        ]
+      },
+      {
+        "component_name": "Footer",
+        "file_path": "src/components/Footer.tsx",
+        "purpose": "Premium footer with links and social media",
+        "dependencies": ["framer-motion", "lucide-react"],
+        "props": {
+          "links": "FooterLinks (optional)",
+          "socialLinks": "Array<SocialLink> (optional)",
+          "copyright": "string (optional)"
+        },
+        "integration_strategy": {
+          "step_1": "Check existing footer component",
+          "step_2": "Extract existing links and structure",
+          "step_3": "Create new footer that accepts existing data",
+          "step_4": "Preserve all existing links and functionality",
+          "step_5": "Add new styling without changing behavior"
+        }
+      }
+    ]
+  },
+
+  "animation_implementation": {
+    "description": "Implement animations using Framer Motion without breaking existing functionality",
+    "phase": "Phase 3: Add Animations",
+    "critical_rules": [
+      "Animations are optional enhancements - functionality must work without them",
+      "Use Framer Motion variants for consistency",
+      "Keep animation durations between 200-800ms",
+      "Use cubic-bezier easing for smooth motion",
+      "Always provide fallbacks for reduced-motion preference",
+      "Test animations on low-end devices"
+    ],
+    "animation_patterns": [
+      {
+        "pattern_name": "Staggered Fade-In",
+        "use_case": "Lists, grids, multiple elements entering sequentially",
+        "code_example": "const containerVariants = {\n  hidden: { opacity: 0 },\n  visible: {\n    opacity: 1,\n    transition: {\n      staggerChildren: 0.1,\n      delayChildren: 0.2,\n    },\n  },\n};\n\nconst itemVariants = {\n  hidden: { opacity: 0, y: 20 },\n  visible: {\n    opacity: 1,\n    y: 0,\n    transition: { duration: 0.6 },\n  },\n};\n\n<motion.div variants={containerVariants} initial='hidden' animate='visible'>\n  {items.map((item) => (\n    <motion.div key={item.id} variants={itemVariants}>\n      {item.content}\n    </motion.div>\n  ))}\n</motion.div>",
+        "performance_notes": "Use will-change CSS for frequently animated elements",
+        "accessibility": "Respects prefers-reduced-motion by default"
+      },
+      {
+        "pattern_name": "Hover Lift",
+        "use_case": "Cards, buttons, interactive elements",
+        "code_example": "<motion.div\n  whileHover={{ y: -8, transition: { duration: 0.3 } }}\n  className='card'\n>\n  Content\n</motion.div>",
+        "performance_notes": "Uses transform for GPU acceleration",
+        "accessibility": "Only applies on hover, does not affect keyboard navigation"
+      },
+      {
+        "pattern_name": "Scroll-Triggered Animation",
+        "use_case": "Elements that animate when scrolled into view",
+        "code_example": "<motion.div\n  initial={{ opacity: 0, y: 20 }}\n  whileInView={{ opacity: 1, y: 0 }}\n  transition={{ duration: 0.8 }}\n  viewport={{ once: true }}\n>\n  Content\n</motion.div>",
+        "performance_notes": "Use viewport={{ once: true }} to animate only once",
+        "accessibility": "Does not interfere with content visibility"
+      },
+      {
+        "pattern_name": "Icon Rotation",
+        "use_case": "Icons on hover or interaction",
+        "code_example": "<motion.div\n  whileHover={{ rotate: 360 }}\n  transition={{ duration: 0.6 }}\n>\n  <Icon />\n</motion.div>",
+        "performance_notes": "Use rotate transform for smooth animation",
+        "accessibility": "Purely decorative, does not affect functionality"
+      },
+      {
+        "pattern_name": "Continuous Animation",
+        "use_case": "Background orbs, loading spinners, decorative elements",
+        "code_example": "<motion.div\n  animate={{ y: [0, -30, 0] }}\n  transition={{ duration: 6, repeat: Infinity }}\n>\n  Content\n</motion.div>",
+        "performance_notes": "Use repeat: Infinity carefully, test performance impact",
+        "accessibility": "Should not be critical to functionality"
+      }
+    ],
+    "implementation_checklist": [
+      "✓ All animations use Framer Motion",
+      "✓ Animation durations are between 200-800ms",
+      "✓ Easing functions are consistent",
+      "✓ Animations are tested on low-end devices",
+      "✓ Reduced motion preference is respected",
+      "✓ Animations do not block user interactions",
+      "✓ Performance is acceptable (60fps target)"
+    ]
+  },
+
+  "integration_with_existing_code": {
+    "description": "How to integrate new components with existing code without breaking anything",
+    "phase": "Phase 4: Integration",
+    "critical_rules": [
+      "Never modify existing component files unless absolutely necessary",
+      "Always use composition over modification",
+      "Preserve all existing props and functionality",
+      "Test each integration step independently",
+      "Keep existing API calls unchanged",
+      "Maintain existing state management patterns"
+    ],
+    "integration_steps": [
+      {
+        "step_number": 1,
+        "title": "Identify Integration Points",
+        "instructions": "Map where new components will be integrated",
+        "actions": [
+          "List all existing pages/routes",
+          "Identify where new components will be added",
+          "Document existing components at each location",
+          "Note any existing state or props at each location",
+          "Check for any conflicts or dependencies"
+        ],
+        "example_mapping": {
+          "existing_page": "pages/Home.tsx",
+          "existing_content": "Hero section, Features list, CTA buttons",
+          "new_components": "AnimatedOrbs, Navigation, HeroSection, FeaturesSection, CTASection, Footer",
+          "integration_strategy": "Wrap existing content with new components, preserve existing logic"
+        }
+      },
+      {
+        "step_number": 2,
+        "title": "Create Wrapper Components",
+        "instructions": "Create wrapper components that bridge old and new code",
+        "code_pattern": "// OLD: Existing component\nexport function OldHeroSection() {\n  const [data, setData] = useState(null);\n  useEffect(() => {\n    fetchData();\n  }, []);\n  return <div>{/* existing JSX */}</div>;\n}\n\n// NEW: Wrapper that enhances old component\nexport function EnhancedHeroSection() {\n  return (\n    <>\n      <AnimatedOrbs /> {/* New component */}\n      <OldHeroSection /> {/* Existing component preserved */}\n    </>\n  );\n}\n\n// ALTERNATIVE: New component that accepts old data as props\nexport function NewHeroSection(props: OldHeroSectionProps) {\n  return (\n    <motion.div>\n      {/* New styling and animations */}\n      {/* Use props from old component */}\n    </motion.div>\n  );\n}",
+        "critical_notes": [
+          "Use composition (wrapping) rather than modification",
+          "Preserve all existing props and state",
+          "Test wrapper components independently"
+        ]
+      },
+      {
+        "step_number": 3,
+        "title": "Handle Existing State Management",
+        "instructions": "Ensure new components work with existing state management",
+        "state_management_patterns": {
+          "pattern_1": {
+            "name": "Context API",
+            "integration": "New components can consume existing contexts via useContext()",
+            "code_example": "const { userData } = useContext(UserContext);\n// Use userData in new component"
+          },
+          "pattern_2": {
+            "name": "Redux/Zustand",
+            "integration": "New components can use existing selectors and actions",
+            "code_example": "const user = useSelector(selectUser);\nconst dispatch = useDispatch();\n// Use in new component"
+          },
+          "pattern_3": {
+            "name": "Local State (useState)",
+            "integration": "New components can lift state up or create local state",
+            "code_example": "const [isOpen, setIsOpen] = useState(false);\n// Pass to new component as prop"
+          }
+        },
+        "critical_rules": [
+          "Do NOT change existing state management structure",
+          "Do NOT modify existing reducers or actions",
+          "Do NOT change existing context structure",
+          "Use existing state in new components via props"
+        ]
+      },
+      {
+        "step_number": 4,
+        "title": "Connect API Calls",
+        "instructions": "Ensure new components work with existing API calls",
+        "api_integration_patterns": {
+          "pattern_1": {
+            "name": "Pass API Data as Props",
+            "description": "Fetch data in existing component, pass to new component",
+            "code_example": "export function Page() {\n  const [data, setData] = useState(null);\n  \n  useEffect(() => {\n    fetchData().then(setData);\n  }, []);\n  \n  return (\n    <>\n      <NewComponent data={data} />\n      <OldComponent data={data} />\n    </>\n  );\n}"
+          },
+          "pattern_2": {
+            "name": "Use Existing API Hooks",
+            "description": "New components use same API hooks as existing components",
+            "code_example": "export function NewComponent() {\n  const { data, loading, error } = useExistingAPIHook();\n  return <div>{/* Render with data */}</div>;\n}"
+          },
+          "pattern_3": {
+            "name": "Separate API Concerns",
+            "description": "Keep API calls in parent component, new components are presentational",
+            "code_example": "// Parent component handles API\nexport function Container() {\n  const [data, setData] = useState(null);\n  useEffect(() => { fetchData(); }, []);\n  return <NewComponent data={data} />;\n}\n\n// New component is purely presentational\nexport function NewComponent({ data }) {\n  return <div>{/* Render data */}</div>;\n}"
+          }
+        },
+        "critical_rules": [
+          "Do NOT change existing API endpoints",
+          "Do NOT modify existing API response structure",
+          "Do NOT create duplicate API calls",
+          "Use existing API hooks and utilities"
+        ]
+      },
+      {
+        "step_number": 5,
+        "title": "Preserve Routing",
+        "instructions": "Ensure new components do not break existing routing",
+        "routing_patterns": {
+          "pattern_1": {
+            "name": "React Router",
+            "integration": "New components can be used within existing routes",
+            "code_example": "export function HomePage() {\n  return (\n    <>\n      <Navigation /> {/* New component */}\n      <HeroSection /> {/* New component */}\n      <OldContent /> {/* Existing component */}\n      <Footer /> {/* New component */}\n    </>\n  );\n}"
+          },
+          "pattern_2": {
+            "name": "Wouter",
+            "integration": "New components work with existing Route components",
+            "code_example": "<Route path='/' component={() => (\n  <>\n    <Navigation />\n    <HeroSection />\n  </>\n)} />"
+          }
+        },
+        "critical_rules": [
+          "Do NOT modify existing route paths",
+          "Do NOT change route parameters",
+          "Do NOT modify route guards or middleware",
+          "Use new components within existing routes"
+        ]
+      }
+    ]
+  },
+
+  "styling_integration": {
+    "description": "Integrate new styles with existing CSS without conflicts",
+    "phase": "Phase 5: Styling",
+    "critical_rules": [
+      "Never delete existing CSS files",
+      "Use CSS specificity carefully to avoid conflicts",
+      "Use CSS custom properties for theming",
+      "Organize styles with @layer directive",
+      "Keep existing class names intact",
+      "Test CSS changes in browser DevTools"
+    ],
+    "css_organization": {
+      "file_structure": {
+        "src/styles/": {
+          "design-tokens.css": "CSS custom properties and variables",
+          "base.css": "Base styles (html, body, reset)",
+          "components.css": "Component-specific styles",
+          "animations.css": "Animation keyframes and utilities",
+          "utilities.css": "Utility classes",
+          "responsive.css": "Media queries and responsive styles",
+          "legacy.css": "Existing styles (do not modify)"
+        }
+      },
+      "import_order": [
+        "1. design-tokens.css (variables)",
+        "2. base.css (reset and base styles)",
+        "3. legacy.css (existing styles - DO NOT MODIFY)",
+        "4. components.css (new component styles)",
+        "5. animations.css (animation keyframes)",
+        "6. utilities.css (utility classes)",
+        "7. responsive.css (media queries)"
+      ],
+      "critical_notes": [
+        "Import order matters - tokens must come first",
+        "Legacy styles must be imported before new styles to allow overrides",
+        "Use @layer to organize CSS cascade",
+        "Use CSS custom properties instead of hardcoding values"
+      ]
+    },
+    "css_layer_organization": {
+      "code_example": "@layer reset {\n  /* Base resets */\n}\n\n@layer base {\n  /* Base styles */\n}\n\n@layer components {\n  /* Component styles */\n  .glass-card { /* ... */ }\n  .neon-glow { /* ... */ }\n}\n\n@layer utilities {\n  /* Utility classes */\n  .animate-float { /* ... */ }\n}",
+      "benefits": [
+        "Clear cascade organization",
+        "Easy to override styles",
+        "Prevents specificity wars",
+        "Maintainable and scalable"
+      ]
+    },
+    "avoiding_conflicts": {
+      "rule_1": {
+        "name": "Use Namespace Prefixes",
+        "description": "Prefix new classes to avoid conflicts with existing ones",
+        "example": "/* Good - prefixed with 'enhanced-' */\n.enhanced-card { /* ... */ }\n.enhanced-button { /* ... */ }\n\n/* Bad - might conflict with existing */\n.card { /* ... */ }\n.button { /* ... */ }"
+      },
+      "rule_2": {
+        "name": "Use CSS Custom Properties",
+        "description": "Use variables instead of hardcoding values",
+        "example": "/* Good - uses variable */\n.card {\n  background-color: var(--color-surface);\n  border: 1px solid var(--color-border);\n}\n\n/* Bad - hardcoded value */\n.card {\n  background-color: rgba(15, 20, 25, 0.7);\n}"
+      },
+      "rule_3": {
+        "name": "Avoid !important",
+        "description": "Use proper CSS specificity instead of !important",
+        "example": "/* Good - proper specificity */\n.container .card { /* ... */ }\n\n/* Bad - uses !important */\n.card { /* ... */ !important; }"
+      },
+      "rule_4": {
+        "name": "Test CSS Changes",
+        "description": "Always test CSS changes in browser DevTools",
+        "steps": [
+          "Open Chrome DevTools (F12)",
+          "Go to Elements tab",
+          "Select element to inspect",
+          "Check Styles panel for conflicts",
+          "Test changes in DevTools before committing"
+        ]
+      }
+    }
+  },
+
+  "testing_and_validation": {
+    "description": "Test new components to ensure they work correctly and do not break existing functionality",
+    "phase": "Phase 6: Testing",
+    "critical_rules": [
+      "Test each component independently",
+      "Test integration with existing components",
+      "Test on multiple browsers and devices",
+      "Test with different screen sizes",
+      "Test accessibility",
+      "Test performance"
+    ],
+    "testing_checklist": {
+      "component_testing": [
+        "✓ Each new component renders without errors",
+        "✓ Props are correctly passed and used",
+        "✓ Animations play smoothly",
+        "✓ Hover states work correctly",
+        "✓ Mobile responsive design works",
+        "✓ Keyboard navigation works",
+        "✓ Screen reader compatibility"
+      ],
+      "integration_testing": [
+        "✓ New components work with existing components",
+        "✓ Existing functionality is not broken",
+        "✓ API calls work correctly",
+        "✓ State management works correctly",
+        "✓ Routing works correctly",
+        "✓ No console errors or warnings"
+      ],
+      "performance_testing": [
+        "✓ Page load time is acceptable",
+        "✓ Animations are smooth (60fps)",
+        "✓ No memory leaks",
+        "✓ Bundle size is acceptable",
+        "✓ Performance on low-end devices"
+      ],
+      "accessibility_testing": [
+        "✓ Color contrast meets WCAG AA standards",
+        "✓ Keyboard navigation is fully functional",
+        "✓ Screen reader compatibility",
+        "✓ Focus indicators are visible",
+        "✓ Reduced motion preference is respected"
+      ]
+    },
+    "browser_testing": {
+      "browsers": [
+        "Chrome (latest 2 versions)",
+        "Firefox (latest 2 versions)",
+        "Safari (latest 2 versions)",
+        "Edge (latest 2 versions)"
+      ],
+      "devices": [
+        "Desktop (1920x1080, 1366x768)",
+        "Tablet (768x1024, iPad Pro)",
+        "Mobile (375x667, 414x896, 360x640)"
+      ],
+      "testing_tools": [
+        "Chrome DevTools (F12)",
+        "Firefox Developer Tools",
+        "Safari Developer Tools",
+        "BrowserStack for cross-browser testing",
+        "Lighthouse for performance testing"
+      ]
+    },
+    "manual_testing_steps": [
+      {
+        "step": 1,
+        "action": "Open application in Chrome",
+        "verification": "Page loads without errors"
+      },
+      {
+        "step": 2,
+        "action": "Scroll through page",
+        "verification": "Animations play smoothly, no jank or stuttering"
+      },
+      {
+        "step": 3,
+        "action": "Hover over interactive elements",
+        "verification": "Hover states work correctly"
+      },
+      {
+        "step": 4,
+        "action": "Click buttons and links",
+        "verification": "Navigation works correctly, no broken links"
+      },
+      {
+        "step": 5,
+        "action": "Open DevTools (F12)",
+        "verification": "No console errors or warnings"
+      },
+      {
+        "step": 6,
+        "action": "Test on mobile (use DevTools device emulation)",
+        "verification": "Responsive design works correctly"
+      },
+      {
+        "step": 7,
+        "action": "Test keyboard navigation (Tab key)",
+        "verification": "All interactive elements are reachable via keyboard"
+      },
+      {
+        "step": 8,
+        "action": "Test with screen reader (NVDA or JAWS)",
+        "verification": "Content is readable and navigable"
+      },
+      {
+        "step": 9,
+        "action": "Run Lighthouse audit (DevTools > Lighthouse)",
+        "verification": "Performance, Accessibility, Best Practices scores are good"
+      },
+      {
+        "step": 10,
+        "action": "Test existing functionality",
+        "verification": "All existing features still work correctly"
+      }
+    ]
+  },
+
+  "deployment_and_optimization": {
+    "description": "Prepare for deployment and optimize performance",
+    "phase": "Phase 7: Deployment",
+    "critical_rules": [
+      "Always create backups before deployment",
+      "Test thoroughly before deploying to production",
+      "Use version control (git) for all changes",
+      "Document all changes made",
+      "Monitor performance after deployment",
+      "Have rollback plan ready"
+    ],
+    "pre_deployment_checklist": [
+      "✓ All tests pass",
+      "✓ No console errors or warnings",
+      "✓ Performance is acceptable",
+      "✓ Accessibility audit passes",
+      "✓ Responsive design works on all devices",
+      "✓ All existing functionality works",
+      "✓ Code is well-documented",
+      "✓ Git commits are clear and descriptive",
+      "✓ Staging environment tested",
+      "✓ Rollback plan documented"
+    ],
+    "performance_optimization": {
+      "image_optimization": {
+        "steps": [
+          "Use WebP format for images",
+          "Compress images with TinyPNG or similar",
+          "Use responsive images (srcset)",
+          "Lazy load images below the fold",
+          "Use CDN for image delivery"
+        ],
+        "tools": [
+          "ImageOptim",
+          "TinyPNG",
+          "Squoosh",
+          "ImageMagick"
+        ]
+      },
+      "code_optimization": {
+        "steps": [
+          "Minify CSS and JavaScript",
+          "Remove unused CSS (PurgeCSS)",
+          "Code splitting for large bundles",
+          "Tree shaking to remove unused code",
+          "Lazy load components"
+        ],
+        "tools": [
+          "Webpack",
+          "Vite",
+          "Terser",
+          "PurgeCSS"
+        ]
+      },
+      "animation_optimization": {
+        "steps": [
+          "Use GPU acceleration (transform, opacity)",
+          "Avoid animating expensive properties (width, height)",
+          "Use will-change CSS property",
+          "Reduce animation complexity on low-end devices",
+          "Test on low-end devices"
+        ],
+        "tools": [
+          "Chrome DevTools Performance tab",
+          "Lighthouse",
+          "WebPageTest"
+        ]
+      }
+    },
+    "deployment_steps": [
+      {
+        "step": 1,
+        "action": "Create git branch for new features",
+        "command": "git checkout -b feature/enhanced-ui"
+      },
+      {
+        "step": 2,
+        "action": "Commit all changes",
+        "command": "git add . && git commit -m 'Add enhanced UI components and animations'"
+      },
+      {
+        "step": 3,
+        "action": "Push to remote repository",
+        "command": "git push origin feature/enhanced-ui"
+      },
+      {
+        "step": 4,
+        "action": "Create pull request for code review",
+        "instructions": "Go to GitHub/GitLab and create PR, request reviews from team members"
+      },
+      {
+        "step": 5,
+        "action": "Deploy to staging environment",
+        "command": "npm run build && npm run deploy:staging"
+      },
+      {
+        "step": 6,
+        "action": "Test in staging environment",
+        "instructions": "Run full test suite, manual testing, performance testing"
+      },
+      {
+        "step": 7,
+        "action": "Deploy to production",
+        "command": "npm run build && npm run deploy:production"
+      },
+      {
+        "step": 8,
+        "action": "Monitor performance and errors",
+        "instructions": "Check analytics, error tracking, performance monitoring"
+      }
+    ]
+  },
+
+  "common_pitfalls_and_solutions": {
+    "description": "Common mistakes to avoid when implementing enhanced UI",
+    "pitfalls": [
+      {
+        "pitfall": "Breaking existing component props",
+        "problem": "Modifying existing component props breaks existing code that uses those components",
+        "solution": "Use composition and wrapper components instead of modifying existing components",
+        "code_example": "// BAD - modifies existing component\nexport function Card(props) {\n  // Changed props interface - breaks existing code\n}\n\n// GOOD - creates new component\nexport function EnhancedCard(props) {\n  return <Card {...props} />; // Preserves existing props\n}"
+      },
+      {
+        "pitfall": "Deleting existing CSS files",
+        "problem": "Deleting existing CSS breaks styling of existing components",
+        "solution": "Always extend existing CSS, never delete",
+        "code_example": "// BAD - deletes existing file\nrm src/styles/legacy.css\n\n// GOOD - imports existing file\n@import './legacy.css';"
+      },
+      {
+        "pitfall": "Hardcoding values instead of using variables",
+        "problem": "Hardcoded values are difficult to maintain and change",
+        "solution": "Use CSS custom properties for all values",
+        "code_example": "// BAD - hardcoded value\n.card { background-color: rgba(15, 20, 25, 0.7); }\n\n// GOOD - uses variable\n.card { background-color: var(--color-surface); }"
+      },
+      {
+        "pitfall": "Animations blocking user interactions",
+        "problem": "Long animations prevent users from interacting with elements",
+        "solution": "Keep animations short (200-800ms) and use pointer-events: none for decorative elements",
+        "code_example": "// BAD - long animation blocks interaction\n<motion.div animate={{ opacity: [0, 1] }} transition={{ duration: 5 }}>\n\n// GOOD - short animation, does not block\n<motion.div animate={{ opacity: [0, 1] }} transition={{ duration: 0.6 }}>"
+      },
+      {
+        "pitfall": "Not testing on low-end devices",
+        "problem": "Animations and effects may not work smoothly on low-end devices",
+        "solution": "Test on low-end devices and reduce animation complexity if needed",
+        "code_example": "// Check device performance and reduce animations\nconst prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;\nif (prefersReducedMotion) {\n  // Use simpler animations or no animations\n}"
+      },
+      {
+        "pitfall": "Ignoring accessibility",
+        "problem": "New components may not be accessible to users with disabilities",
+        "solution": "Follow WCAG guidelines and test with screen readers",
+        "code_example": "// BAD - no accessibility\n<div onClick={handleClick}>Click me</div>\n\n// GOOD - accessible\n<button onClick={handleClick} aria-label='Click me'>\n  Click me\n</button>"
+      },
+      {
+        "pitfall": "Not preserving existing API calls",
+        "problem": "Changing API calls breaks existing functionality",
+        "solution": "Use existing API calls and hooks, do not create duplicates",
+        "code_example": "// BAD - creates new API call\nconst { data } = useNewAPI();\n\n// GOOD - uses existing API\nconst { data } = useExistingAPI();"
+      },
+      {
+        "pitfall": "Modifying existing state management",
+        "problem": "Changing state management breaks existing components",
+        "solution": "Use existing state management patterns, do not modify",
+        "code_example": "// BAD - modifies existing reducer\nconst newReducer = (state, action) => { /* ... */ };\n\n// GOOD - uses existing reducer\nconst { state, dispatch } = useContext(ExistingContext);"
+      }
+    ]
+  },
+
+  "quick_reference_guide": {
+    "description": "Quick reference for common tasks during implementation",
+    "commands": {
+      "setup": [
+        "npm install framer-motion",
+        "npm install lucide-react",
+        "npm install tailwindcss-animate"
+      ],
+      "development": [
+        "npm run dev (start dev server)",
+        "npm run build (build for production)",
+        "npm run preview (preview production build)",
+        "npm run lint (check code quality)"
+      ],
+      "git": [
+        "git status (check status)",
+        "git add . (stage all changes)",
+        "git commit -m 'message' (commit changes)",
+        "git push (push to remote)",
+        "git pull (pull from remote)"
+      ]
+    },
+    "file_locations": {
+      "components": "src/components/",
+      "pages": "src/pages/",
+      "styles": "src/styles/",
+      "hooks": "src/hooks/",
+      "utils": "src/utils/",
+      "config": "tailwind.config.ts, tsconfig.json, vite.config.ts"
+    },
+    "key_files_to_modify": [
+      "src/styles/design-tokens.css (add design tokens)",
+      "tailwind.config.ts (extend Tailwind config)",
+      "src/pages/Home.tsx (integrate new components)",
+      "src/App.tsx (update theme if needed)"
+    ],
+    "key_files_NOT_to_modify": [
+      "package.json (unless adding dependencies)",
+      "tsconfig.json (unless needed)",
+      "vite.config.ts (unless needed)",
+      "Existing component files (use composition instead)"
+    ]
+  },
+
+  "final_checklist": {
+    "description": "Final checklist before considering implementation complete",
+    "pre_completion": [
+      "✓ All new components created and tested",
+      "✓ All animations implemented and smooth",
+      "✓ All styles integrated without conflicts",
+      "✓ All existing functionality preserved",
+      "✓ All tests passing",
+      "✓ No console errors or warnings",
+      "✓ Performance acceptable on all devices",
+      "✓ Accessibility audit passed",
+      "✓ Code well-documented with comments",
+      "✓ Git commits are clear and descriptive"
+    ],
+    "post_deployment": [
+      "✓ Monitor error tracking for new errors",
+      "✓ Check analytics for performance metrics",
+      "✓ Gather user feedback",
+      "✓ Monitor server logs for issues",
+      "✓ Have rollback plan ready if needed",
+      "✓ Document any issues found",
+      "✓ Plan for future improvements"
+    ]
+  }
+}

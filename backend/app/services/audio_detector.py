@@ -32,10 +32,11 @@ class AudioDetectorService:
             model_path = Path("d:/Deepway/Models") / settings.AUDIO_DETECTOR_PATH
         
         if not model_path.exists():
-            logger.warning(f"Audio detector model not found at {model_path}")
+            logger.warning(f"Audio detector model not found at {model_path} (CWD: {Path.cwd()})")
             return False
         
         try:
+            logger.info(f"Attempting to load audio model from: {model_path}")
             providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] \
                        if settings.USE_GPU else ['CPUExecutionProvider']
             self.session = ort.InferenceSession(str(model_path), providers=providers)

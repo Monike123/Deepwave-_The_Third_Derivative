@@ -1,503 +1,368 @@
-import { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    Upload, Image, Video, Music, AlertTriangle, CheckCircle,
-    XCircle, Loader, FileText, ChevronDown, ChevronUp, Zap, Shield, Download
-} from 'lucide-react';
-import { analyzeMedia, analyzeMediaAdvanced, downloadPDFReport, getMediaType } from '../services/api';
+import { useState, useRef } from 'react';
+import { Upload, X, AlertTriangle, CheckCircle, Activity } from 'lucide-react';
 import './AnalyzePage.css';
+import AnalysisLoading from '../components/AnalysisLoading';
 
-export function AnalyzePage() {
+interface AnalysisResult {
+    classification: string;
+    confidence: string;
+    risk_score: number;
+    prediction: {
+        fake_probability: number;
+        real_probability: number;
+    };
+    faces_detected?: number;
+    prediction_time?: number;
+    signals?: {
+        nvidia_hive?: {
+            risk_score: number;
+            classification: string;
+        };
+        huggingface?: {
+            risk_score: number;
+            classification: string;
+        };
+        local_ensemble?: {
+            risk_score: number;
+            classification: string;
+            forensic_plots?: {
+                ela?: string;
+                spectrum?: string;
+            };
+            forensic_details?: {
+                ela_explanation?: string;
+                spectrum_explanation?: string;
+            };
+        };
+        local_temporal?: {
+            risk_score: number;
+            classification: string;
+        };
+    };
+    audio_features?: any;
+    processing_time_ms: number;
+}
+
+
+export default function AnalyzePage() {
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState<AnalysisResult | null>(null);
+    const [mode, setMode] = useState<'standard' | 'enhanced'>('standard');
     const [error, setError] = useState<string | null>(null);
-    const [result, setResult] = useState<any>(null);
-    const [showDetails, setShowDetails] = useState(false);
-    const [mode, setMode] = useState<'basic' | 'advanced'>('basic');
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-
-    const onDrop = useCallback((acceptedFiles: File[]) => {
-        const file = acceptedFiles[0];
-        if (file) {
-            setFile(file);
-            setError(null);
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const selectedFile = e.target.files[0];
+            setFile(selectedFile);
             setResult(null);
+            setError(null);
 
-            // Create preview for images
-            const mediaType = getMediaType(file);
-            if (mediaType === 'image') {
-                const reader = new FileReader();
-                reader.onload = () => setPreview(reader.result as string);
-                reader.readAsDataURL(file);
-            } else {
-                setPreview(null);
-            }
+            // Create preview
+            const objectUrl = URL.createObjectURL(selectedFile);
+            setPreview(objectUrl);
         }
-    }, []);
+    };
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
-        accept: {
-            'image/*': ['.jpg', '.jpeg', '.png', '.webp', '.bmp'],
-            'video/*': ['.mp4', '.avi', '.mov', '.webm', '.mkv'],
-            'audio/*': ['.wav', '.mp3', '.m4a', '.flac', '.ogg']
-        },
-        maxSize: 100 * 1024 * 1024, // 100MB
-        multiple: false
-    });
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            const selectedFile = e.dataTransfer.files[0];
+            setFile(selectedFile);
+            setResult(null);
+            setError(null);
+            const objectUrl = URL.createObjectURL(selectedFile);
+            setPreview(objectUrl);
+        }
+    };
 
-    const handleAnalyze = async () => {
+    const clearFile = () => {
+        setFile(null);
+        setPreview(null);
+        setResult(null);
+        setError(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const analyzeFile = async () => {
         if (!file) return;
 
         setLoading(true);
         setError(null);
+        const formData = new FormData();
+        formData.append('file', file);
 
         try {
-            const analysisResult = mode === 'advanced'
-                ? await analyzeMediaAdvanced(file)
-                : await analyzeMedia(file);
-            setResult(analysisResult);
+            // Determine endpoint based on file type and mode
+            const isVideo = file.type.startsWith('video/');
+            const isAudio = file.type.startsWith('audio/');
+
+            const baseEndpoint = mode === 'enhanced' ? '/api/v1/analyze/advanced' : '/api/v1/analyze';
+
+            let typeEndpoint = '/image/';
+            if (isVideo) typeEndpoint = '/video/';
+            if (isAudio) typeEndpoint = '/audio/';
+
+            // Enhanced mode might not support audio directly unless mapped
+            if (isAudio && mode === 'enhanced') {
+                // If enhanced audio implemented (it is in advanced.py: /audio/)
+                typeEndpoint = '/audio/';
+            }
+
+            // Use 127.0.0.1 to avoid Windows IPv6 localhost issues
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+            const response = await fetch(`http://127.0.0.1:8000${baseEndpoint}${typeEndpoint}`, {
+                method: 'POST',
+                body: formData,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || 'Analysis failed');
+            }
+
+            setResult(data);
         } catch (err: any) {
-            const detail = err.response?.data?.detail || err.message || 'Analysis failed';
-            setError(mode === 'advanced' && (detail.includes('HF_TOKEN') || detail.includes('503'))
-                ? 'Enhanced detection service temporarily unavailable'
-                : detail);
+            setError(err.message || 'An error occurred during analysis');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleReset = () => {
-        setFile(null);
-        setPreview(null);
-        setResult(null);
-        setError(null);
-    };
-
-    const [downloading, setDownloading] = useState(false);
-
-    const handleDownloadReport = async () => {
-        if (!result) return;
-        setDownloading(true);
-        try {
-            await downloadPDFReport(result);
-        } catch (err) {
-            setError('Failed to download report');
-        } finally {
-            setDownloading(false);
-        }
-    };
-
-    // Get interpretation based on classification
-    const getInterpretation = () => {
-        if (!result) return null;
-        const classification = result.classification;
-        const riskScore = result.risk_score || 0;
-        const prediction = result.prediction || {};
-        const realProb = (prediction.real_probability || 0) * 100;
-        const fakeProb = (prediction.fake_probability || prediction.synthetic_probability || 0) * 100;
-
-        if (classification === 'AUTHENTIC') {
-            return {
-                title: 'Media Appears Authentic',
-                description: `This media is likely authentic with ${realProb.toFixed(1)}% authenticity probability. The risk score of ${riskScore.toFixed(1)}% falls within the safe range.`,
-                findings: [
-                    'No significant deepfake artifacts detected',
-                    'Visual patterns consistent with authentic media',
-                    'Forensic analysis shows natural characteristics'
-                ],
-                recommendation: 'This media can be considered genuine based on our analysis.'
-            };
-        } else if (classification === 'SUSPICIOUS') {
-            return {
-                title: 'Media Flagged as Suspicious',
-                description: `This media shows potential signs of manipulation with ${fakeProb.toFixed(1)}% manipulation probability. Further investigation is recommended.`,
-                findings: [
-                    'Some anomalies detected in visual patterns',
-                    'Borderline forensic indicators present',
-                    'Results require additional verification'
-                ],
-                recommendation: 'Consider using additional verification methods before making critical decisions.'
-            };
-        } else {
-            return {
-                title: 'Media Likely Manipulated',
-                description: `Strong indicators of manipulation detected with ${fakeProb.toFixed(1)}% manipulation probability. Risk score: ${riskScore.toFixed(1)}%.`,
-                findings: [
-                    'Strong deepfake artifacts detected',
-                    'Inconsistent visual patterns identified',
-                    'Forensic analysis reveals manipulation signatures'
-                ],
-                recommendation: 'This media should be treated with caution and not used as authentic evidence.'
-            };
-        }
-    };
-
-    const getMediaIcon = () => {
-        if (!file) return <Upload size={48} />;
-        const type = getMediaType(file);
-        switch (type) {
-            case 'image': return <Image size={48} />;
-            case 'video': return <Video size={48} />;
-            case 'audio': return <Music size={48} />;
-            default: return <FileText size={48} />;
-        }
-    };
-
-    const getClassificationBadge = (classification: string) => {
-        switch (classification) {
-            case 'AUTHENTIC':
-                return <span className="badge badge-success"><CheckCircle size={14} /> Authentic</span>;
-            case 'SUSPICIOUS':
-                return <span className="badge badge-warning"><AlertTriangle size={14} /> Suspicious</span>;
-            case 'MANIPULATED':
-            case 'SYNTHETIC':
-                return <span className="badge badge-danger"><XCircle size={14} /> Manipulated</span>;
-            default:
-                return <span className="badge">{classification}</span>;
-        }
-    };
-
-    const getRiskColor = (score: number) => {
-        if (score < 40) return 'var(--success)';
-        if (score < 70) return 'var(--warning)';
-        return 'var(--danger)';
-    };
-
     return (
-        <div className="analyze-page">
-            <div className="container">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="page-header"
-                >
-                    <h1>Analyze Media</h1>
-                    <p>Upload an image, video, or audio file to check for manipulation</p>
+        <div className="analyze-page min-h-screen text-white">
+            <div className="container mx-auto px-4 py-8">
+                <h1 className="page-title">Deepfake Analysis</h1>
 
-                    {/* Mode Toggle */}
-                    <div className="mode-toggle">
-                        <button
-                            className={`mode-btn ${mode === 'basic' ? 'active' : ''}`}
-                            onClick={() => setMode('basic')}
-                        >
-                            <Shield size={18} />
-                            Standard Analysis
-                        </button>
-                        <button
-                            className={`mode-btn ${mode === 'advanced' ? 'active' : ''}`}
-                            onClick={() => setMode('advanced')}
-                        >
-                            <Zap size={18} />
-                            Enhanced Detection
-                        </button>
+                {loading ? (
+                    <div className="animate-fade-in">
+                        <AnalysisLoading />
                     </div>
-                    {mode === 'advanced' && (
-                        <p className="mode-note">Using our advanced deep learning models for enhanced detection</p>
-                    )}
-                </motion.div>
-
-                <div className="analyze-content">
-                    {/* Upload Section */}
-                    <motion.div
-                        className="upload-section"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                    >
-                        <div
-                            {...getRootProps()}
-                            className={`dropzone ${isDragActive ? 'active' : ''} ${file ? 'has-file' : ''}`}
-                        >
-                            <input {...getInputProps()} />
-
-                            {preview ? (
-                                <div className="preview-container">
-                                    <img src={preview} alt="Preview" className="preview-image" />
+                ) : (
+                    <>
+                        <div className="analysis-grid">
+                            {/* Upload Section */}
+                            <div className="upload-card">
+                                <div className="mode-toggle">
+                                    <button
+                                        className={`mode-btn ${mode === 'standard' ? 'active' : ''}`}
+                                        onClick={() => setMode('standard')}
+                                    >
+                                        Standard (Local)
+                                    </button>
+                                    <button
+                                        className={`mode-btn ${mode === 'enhanced' ? 'active' : ''}`}
+                                        onClick={() => setMode('enhanced')}
+                                    >
+                                        Enhanced (Cloud AI)
+                                    </button>
                                 </div>
-                            ) : (
-                                <div className="dropzone-content">
-                                    <div className="dropzone-icon">
-                                        {getMediaIcon()}
+
+                                {!file ? (
+                                    <div
+                                        className="dropzone"
+                                        onDragOver={(e) => e.preventDefault()}
+                                        onDrop={handleDrop}
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
+                                        <div className="upload-icon-wrapper">
+                                            <Upload size={48} className="upload-icon" />
+                                        </div>
+                                        <h3>Click to upload or drag & drop</h3>
+                                        <p>Supports JPG, PNG, MP4, AVI, WAV, MP3 (Max 100MB)</p>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            onChange={handleFileChange}
+                                            hidden
+                                            accept="image/*,video/*,audio/*"
+                                        />
                                     </div>
-                                    {isDragActive ? (
-                                        <p>Drop the file here...</p>
-                                    ) : file ? (
+                                ) : (
+                                    <div className="preview-container">
+                                        <button className="clear-btn" onClick={clearFile}>
+                                            <X size={20} />
+                                        </button>
+                                        {file.type.startsWith('video/') ? (
+                                            <video src={preview!} controls className="file-preview" />
+                                        ) : file.type.startsWith('audio/') ? (
+                                            <audio src={preview!} controls className="w-full mt-4" />
+                                        ) : (
+                                            <img src={preview!} alt="Preview" className="file-preview" />
+                                        )}
                                         <div className="file-info">
-                                            <p className="file-name">{file.name}</p>
-                                            <p className="file-size">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                            <span className="filename">{file.name}</span>
+                                            <span className="filesize">{(file.size / (1024 * 1024)).toFixed(2)} MB</span>
                                         </div>
-                                    ) : (
-                                        <>
-                                            <p><strong>Drag & drop</strong> your file here</p>
-                                            <p className="text-muted">or click to browse</p>
-                                            <p className="supported-formats">
-                                                Supports: JPG, PNG, MP4, AVI, WAV, MP3
-                                            </p>
-                                        </>
-                                    )}
+
+                                        <button
+                                            className="analyze-btn"
+                                            onClick={analyzeFile}
+                                            disabled={loading}
+                                        >
+                                            {loading ? (
+                                                <>
+                                                    <span className="spinner"></span>
+                                                    Analyzing...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Activity size={20} />
+                                                    Start Analysis
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {error && (
+                                    <div className="error-message">
+                                        <AlertTriangle size={20} />
+                                        {error}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Results Section */}
+                            {result && (
+                                <div className="results-card">
+                                    <div className={`result-header ${result.classification.toLowerCase()}`}>
+                                        {result.classification === 'AUTHENTIC' ? (
+                                            <CheckCircle size={48} />
+                                        ) : (
+                                            <AlertTriangle size={48} />
+                                        )}
+                                        <div>
+                                            <h2>{result.classification}</h2>
+                                            <span className="confidence-badge">
+                                                {result.confidence} CONFIDENCE
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="score-meter">
+                                        <div className="meter-label">
+                                            <span>Deepfake Probability</span>
+                                            <span>{result.risk_score.toFixed(1)}%</span>
+                                        </div>
+                                        <div className="meter-track">
+                                            <div
+                                                className="meter-fill"
+                                                style={{
+                                                    width: `${result.risk_score}%`,
+                                                    backgroundColor: result.risk_score > 50 ? '#ef4444' : '#10b981'
+                                                }}
+                                            ></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="details-grid">
+                                        <div className="detail-item">
+                                            <span className="label">Real Prob</span>
+                                            <span className="value">{(result.prediction.real_probability * 100).toFixed(1)}%</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <span className="label">Fake Prob</span>
+                                            <span className="value">{(result.prediction.fake_probability * 100).toFixed(1)}%</span>
+                                        </div>
+                                        {result.faces_detected !== undefined && (
+                                            <div className="detail-item">
+                                                <span className="label">Faces Detected</span>
+                                                <span className="value">{result.faces_detected}</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
 
-                        <div className="actions">
-                            {file && !loading && (
-                                <>
-                                    <button onClick={handleAnalyze} className="btn btn-primary">
-                                        Analyze
-                                    </button>
-                                    <button onClick={handleReset} className="btn btn-secondary">
-                                        Clear
-                                    </button>
-                                </>
-                            )}
-
-                            {loading && (
-                                <motion.div
-                                    className="analysis-loading"
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                >
-                                    <div className="scanner-container">
-                                        {/* Outer ring pulse */}
-                                        <div className="scanner-ring ring-1"></div>
-                                        <div className="scanner-ring ring-2"></div>
-                                        <div className="scanner-ring ring-3"></div>
-
-                                        {/* Center core */}
-                                        <div className="scanner-core">
-                                            <div className="core-inner">
-                                                <Zap className="core-icon" size={32} />
-                                            </div>
-                                        </div>
-
-                                        {/* Scanning line */}
-                                        <div className="scan-line"></div>
-
-                                        {/* Orbiting particles */}
-                                        <div className="particle p1"></div>
-                                        <div className="particle p2"></div>
-                                        <div className="particle p3"></div>
-                                        <div className="particle p4"></div>
-                                    </div>
-
-                                    <div className="loading-text">
-                                        <motion.span
-                                            animate={{ opacity: [1, 0.5, 1] }}
-                                            transition={{ duration: 1.5, repeat: Infinity }}
-                                        >
-                                            {mode === 'advanced' ? 'Enhanced Detection Running' : 'Analyzing Media'}
-                                        </motion.span>
-                                    </div>
-
-                                    <div className="loading-steps">
-                                        <motion.div
-                                            className="step"
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: 0.2 }}
-                                        >
-                                            ✓ Extracting features...
-                                        </motion.div>
-                                        <motion.div
-                                            className="step active"
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: [0.5, 1, 0.5] }}
-                                            transition={{ delay: 0.5, duration: 1, repeat: Infinity }}
-                                        >
-                                            ⟳ Running deep analysis...
-                                        </motion.div>
-                                        <motion.div
-                                            className="step pending"
-                                            initial={{ opacity: 0.3 }}
-                                            animate={{ opacity: 0.3 }}
-                                        >
-                                            ○ Generating report...
-                                        </motion.div>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </div>
-
-                        {error && (
-                            <motion.div
-                                className="error-message"
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                            >
-                                <AlertTriangle size={20} />
-                                <span>{error}</span>
-                            </motion.div>
-                        )}
-                    </motion.div>
-
-                    {/* Results Section */}
-                    <AnimatePresence>
+                        {/* Detailed Report Section */}
                         {result && (
-                            <motion.div
-                                className="results-section"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0 }}
-                            >
-                                <div className="results-header">
-                                    <h2>Analysis Results</h2>
-                                    {getClassificationBadge(result.classification)}
-                                </div>
+                            <div className="report-section mt-8">
+                                <h2 className="section-title">Detailed Analysis Report</h2>
 
-                                {/* Risk Score */}
-                                <div className="risk-score-card card">
-                                    <div className="risk-score-display">
-                                        <div
-                                            className="risk-score-circle"
-                                            style={{
-                                                background: `conic-gradient(${getRiskColor(result.risk_score)} ${result.risk_score * 3.6}deg, var(--bg-tertiary) 0deg)`,
-                                            }}
-                                        >
-                                            <div className="risk-score-inner">
-                                                <span className="risk-score-value" style={{ color: getRiskColor(result.risk_score) }}>
-                                                    {Math.round(result.risk_score)}
-                                                </span>
-                                                <span className="risk-score-label">Risk Score</span>
+                                {/* Module Breakdown */}
+                                {result.signals && (
+                                    <div className="module-breakdown grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                                        {result.signals.nvidia_hive && (
+                                            <div className="report-card">
+                                                <h3>Advanced Deep Vision V1</h3>
+                                                <div className="score">{result.signals.nvidia_hive.risk_score.toFixed(1)}% Risk</div>
+                                                <div className="status">{result.signals.nvidia_hive.classification}</div>
                                             </div>
-                                        </div>
-
-                                        <div className="risk-meta">
-                                            <div className="meta-item">
-                                                <span className="meta-label">Confidence</span>
-                                                <span className="meta-value">{result.confidence}</span>
+                                        )}
+                                        {result.signals.huggingface && (
+                                            <div className="report-card">
+                                                <h3>Advanced Deep Vision V2</h3>
+                                                <div className="score">{result.signals.huggingface.risk_score.toFixed(1)}% Risk</div>
+                                                <div className="status">{result.signals.huggingface.classification}</div>
                                             </div>
-                                            <div className="meta-item">
-                                                <span className="meta-label">Processing Time</span>
-                                                <span className="meta-value">{result.processing_time_ms}ms</span>
+                                        )}
+                                        {result.signals.local_ensemble && (
+                                            <div className="report-card">
+                                                <h3>Forensic Core Engine</h3>
+                                                <div className="score">{result.signals.local_ensemble.risk_score.toFixed(1)}% Risk</div>
+                                                <div className="status">{result.signals.local_ensemble.classification}</div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Explanation */}
-                                {'explanation' in result && result.explanation && (
-                                    <div className="explanation-card card">
-                                        <h3>Analysis Summary</h3>
-                                        <p className="explanation-summary">{result.explanation.summary}</p>
-
-                                        <div className="explanation-factors">
-                                            <h4>Key Findings</h4>
-                                            <ul>
-                                                {result.explanation.factors.map((factor, index) => (
-                                                    <li key={index}>{factor}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-
-                                        <div className="recommendation">
-                                            <h4>Recommendation</h4>
-                                            <p>{result.explanation.recommendation}</p>
-                                        </div>
+                                        )}
+                                        {result.signals.local_temporal && (
+                                            <div className="report-card">
+                                                <h3>Local Temporal (3D CNN)</h3>
+                                                <div className="score">{result.signals.local_temporal.risk_score.toFixed(1)}% Risk</div>
+                                                <div className="status">{result.signals.local_temporal.classification}</div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
-                                {/* Signals */}
-                                {'signals' in result && result.signals && Object.keys(result.signals).length > 0 && (
-                                    <div className="signals-card card">
-                                        <h3>Detection Signals</h3>
-                                        <div className="signals-grid">
-                                            {Object.entries(result.signals).map(([name, data]: [string, any]) => (
-                                                <div key={name} className="signal-item">
-                                                    <div className="signal-header">
-                                                        <span className="signal-name">{name}</span>
-                                                        <span
-                                                            className="signal-score"
-                                                            style={{ color: getRiskColor(data.score * 100) }}
-                                                        >
-                                                            {Math.round(data.score * 100)}%
-                                                        </span>
-                                                    </div>
-                                                    <div className="signal-bar">
-                                                        <div
-                                                            className="signal-fill"
-                                                            style={{
-                                                                width: `${data.score * 100}%`,
-                                                                background: getRiskColor(data.score * 100)
-                                                            }}
-                                                        />
-                                                    </div>
+                                {/* Forensic Visualizations */}
+                                {result.signals?.local_ensemble?.forensic_plots && (
+                                    <div className="forensic-viz mb-8">
+                                        <h3 className="subsection-title">Forensic Signal Analysis</h3>
+                                        <div className="viz-grid grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {/* ELA Plot */}
+                                            {result.signals.local_ensemble.forensic_plots.ela && (
+                                                <div className="viz-card">
+                                                    <h4>Error Level Analysis (ELA)</h4>
+                                                    <img
+                                                        src={`data:image/jpeg;base64,${result.signals.local_ensemble.forensic_plots.ela}`}
+                                                        alt="ELA Analysis"
+                                                        className="viz-image"
+                                                    />
+                                                    <p className="viz-desc">
+                                                        {result.signals.local_ensemble.forensic_details?.ela_explanation}
+                                                    </p>
                                                 </div>
-                                            ))}
+                                            )}
+
+                                            {/* Spectrum Plot */}
+                                            {result.signals.local_ensemble.forensic_plots.spectrum && (
+                                                <div className="viz-card">
+                                                    <h4>Frequency Spectrum Analysis</h4>
+                                                    <img
+                                                        src={`data:image/jpeg;base64,${result.signals.local_ensemble.forensic_plots.spectrum}`}
+                                                        alt="Spectrum Analysis"
+                                                        className="viz-image"
+                                                    />
+                                                    <p className="viz-desc">
+                                                        {result.signals.local_ensemble.forensic_details?.spectrum_explanation}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
-
-                                {/* AI Interpretation (for Enhanced mode without explanation) */}
-                                {!('explanation' in result && result.explanation) && getInterpretation() && (
-                                    <div className="interpretation-card card">
-                                        <h3>{getInterpretation()?.title}</h3>
-                                        <p className="interpretation-description">{getInterpretation()?.description}</p>
-
-                                        <div className="interpretation-findings">
-                                            <h4>Key Findings</h4>
-                                            <ul>
-                                                {getInterpretation()?.findings.map((finding: string, idx: number) => (
-                                                    <li key={idx}>{finding}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-
-                                        <div className="interpretation-recommendation">
-                                            <h4>Recommendation</h4>
-                                            <p>{getInterpretation()?.recommendation}</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Download Report Button */}
-                                <button
-                                    className="download-report-btn btn"
-                                    onClick={handleDownloadReport}
-                                    disabled={downloading}
-                                >
-                                    {downloading ? (
-                                        <>
-                                            <Loader className="animate-spin" size={18} />
-                                            Generating Report...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Download size={18} />
-                                            Download PDF Report
-                                        </>
-                                    )}
-                                </button>
-
-                                {/* Details Toggle */}
-                                <button
-                                    className="details-toggle"
-                                    onClick={() => setShowDetails(!showDetails)}
-                                >
-                                    {showDetails ? 'Hide' : 'Show'} Technical Details
-                                    {showDetails ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                </button>
-
-                                <AnimatePresence>
-                                    {showDetails && (
-                                        <motion.div
-                                            className="details-card card"
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: 'auto' }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                        >
-                                            <h3>Raw Response</h3>
-                                            <pre className="json-display">
-                                                {JSON.stringify(result, null, 2)}
-                                            </pre>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </motion.div>
+                            </div>
                         )}
-                    </AnimatePresence>
-                </div>
+                    </>
+                )}
             </div>
         </div>
     );

@@ -1,5 +1,5 @@
 """Image analysis API endpoint."""
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException, Request
 from datetime import datetime
 import numpy as np
 import cv2
@@ -13,6 +13,7 @@ from app.services.fusion_engine import fusion_engine
 from app.services.explainer import explainer
 from app.models.response import ImageAnalysisResponse, FaceDetection, Explanation
 from app.config import settings
+from app.database.storage import storage_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -31,8 +32,8 @@ def validate_image_file(file: UploadFile) -> None:
         )
 
 
-async def load_image_from_upload(file: UploadFile) -> np.ndarray:
-    """Load image from upload file."""
+async def load_image_from_upload(file: UploadFile) -> tuple:
+    """Load image from upload file. Returns (image_array, raw_contents)."""
     contents = await file.read()
     
     if len(contents) > settings.MAX_FILE_SIZE:
@@ -48,11 +49,11 @@ async def load_image_from_upload(file: UploadFile) -> np.ndarray:
     # Convert BGR to RGB
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     
-    return image
+    return image, contents
 
 
 @router.post("/", response_model=ImageAnalysisResponse)
-async def analyze_image(file: UploadFile = File(...)):
+async def analyze_image(file: UploadFile = File(...), request: Request = None):
     """
     Analyze an image for deepfake detection.
     
@@ -65,12 +66,31 @@ async def analyze_image(file: UploadFile = File(...)):
     # Validate file
     validate_image_file(file)
     
-    # Load image
-    image = await load_image_from_upload(file)
+    # Load image (and keep raw contents for storage)
+    image, file_contents = await load_image_from_upload(file)
     
     logger.info(f"Analyzing image: {file.filename}, shape: {image.shape}")
     
-    # 1. Run Visual Analysis (Xception)
+    # Get session info from request headers (if available)
+    session_id = None
+    if request:
+        session_id = request.headers.get("X-Session-ID")
+    
+    # Save upload to database (async, non-blocking)
+    upload_doc = None
+    try:
+        upload_doc = await storage_service.save_upload(
+            file_content=file_contents,
+            filename=file.filename or "unknown",
+            content_type=file.content_type or "image/jpeg",
+            session_id=session_id
+        )
+        if upload_doc:
+            logger.info(f"Saved upload to database: {upload_doc['_id']}")
+    except Exception as e:
+        logger.warning(f"Failed to save upload to database: {e}")
+    
+    # 1. Run Visual Analysis (ViT)
     visual_result = visual_detector.analyze(image)
     
     # 2. Run Forensic Analysis
@@ -98,31 +118,75 @@ async def analyze_image(file: UploadFile = File(...)):
     # Build signals dict
     signals = {}
     
-    if visual_result.get('overall_prediction'):
+    # Map fused result to 'local_ensemble' for frontend compatibility
+    signals['local_ensemble'] = {
+        'risk_score': fused_result['risk_score'],
+        'classification': visual_result.get('detailed_label', fused_result['classification']),
+        'forensic_plots': forensic_result.get('plots', {}),
+        'forensic_details': forensic_result.get('details', {})
+    }
+    
+    # Keep atomic signals if needed for debugging
+    if visual_result.get('prediction'):
         signals['visual'] = {
-            'score': visual_result['overall_prediction'].get('fake_probability', 0.5),
-            'weight': 0.6,
+            'score': visual_result['prediction'].get('fake_probability', 0.5),
+            'weight': 0.7,
             'faces_detected': visual_result.get('faces_detected', 0),
-            'analysis_type': visual_result.get('analysis_type', 'xception_visual')
+            'analysis_type': visual_result.get('analysis_type', 'vit_base'),
+            'class_probabilities': visual_result.get('class_probabilities', {})
         }
     
     if forensic_result.get('prediction'):
         signals['forensic'] = {
             'score': forensic_result['prediction'].get('fake_probability', 0.5),
-            'weight': 0.4,
+            'weight': 0.3,
             'features': forensic_result.get('features', {})
         }
     
     processing_time = int((time.time() - start_time) * 1000)
     
+    # Build response
+    analysis_id = str(uuid.uuid4())
+    
+    response_data = {
+        "analysis_id": analysis_id,
+        "timestamp": datetime.utcnow(),
+        "media_type": "image",
+        "filename": file.filename or "unknown",
+        "classification": fused_result['classification'],
+        "confidence": fused_result['confidence'],
+        "risk_score": fused_result['risk_score'],
+        "prediction": {
+            "fake_probability": fused_result['risk_score'] / 100.0,
+            "real_probability": 1.0 - (fused_result['risk_score'] / 100.0)
+        },
+        "signals": signals,
+        "face_detections": face_detections,
+        "explanation": explanation_result,
+        "processing_time_ms": processing_time
+    }
+    
+    # Save analysis result to database
+    if upload_doc:
+        try:
+            await storage_service.save_analysis_result(
+                upload_id=upload_doc['_id'],
+                result=response_data,
+                mode="standard"
+            )
+            logger.info(f"Saved analysis result for upload: {upload_doc['_id']}")
+        except Exception as e:
+            logger.warning(f"Failed to save analysis result: {e}")
+    
     return ImageAnalysisResponse(
-        analysis_id=str(uuid.uuid4()),
-        timestamp=datetime.utcnow(),
+        analysis_id=analysis_id,
+        timestamp=response_data["timestamp"],
         media_type="image",
-        filename=file.filename or "unknown",
-        classification=fused_result['classification'],
-        confidence=fused_result['confidence'],
-        risk_score=fused_result['risk_score'],
+        filename=response_data["filename"],
+        classification=response_data["classification"],
+        confidence=response_data["confidence"],
+        risk_score=response_data["risk_score"],
+        prediction=response_data["prediction"],
         signals=signals,
         face_detections=face_detections,
         explanation=Explanation(**explanation_result),

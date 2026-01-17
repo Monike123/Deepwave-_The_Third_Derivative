@@ -147,6 +147,7 @@ async def analyze_video(
                 timestamp_seconds=round(ts, 2),
                 risk_score=fused['risk_score'],
                 classification=fused['classification'],
+                detailed_label=visual_result.get('detailed_label'), # Propagate AI vs Deepfake
                 faces_detected=visual_result.get('faces_detected', 0)
             ))
             
@@ -184,6 +185,27 @@ async def analyze_video(
         
         processing_time = int((time.time() - start_time) * 1000)
         
+        # Build signals dict for frontend compatibility
+        signals = {}
+        
+        # Local temporal signal (3D CNN)
+        if 'error' not in temporal_result:
+            signals['local_temporal'] = {
+                'risk_score': temporal_result['risk_score'],
+                'classification': temporal_result['classification'],
+                'confidence': temporal_result['confidence'],
+                'method': temporal_result.get('method', '3D CNN Temporal Analysis')
+            }
+        
+        # Local ensemble from frame analysis (average of frame scores)
+        if frame_analyses:
+            avg_frame_risk = np.mean([f.risk_score for f in frame_analyses])
+            signals['local_ensemble'] = {
+                'risk_score': round(avg_frame_risk, 2),
+                'classification': 'MANIPULATED' if avg_frame_risk > 50 else 'AUTHENTIC',
+                'frames_analyzed': len(frame_analyses)
+            }
+        
         return VideoAnalysisResponse(
             analysis_id=str(uuid.uuid4()),
             timestamp=datetime.utcnow(),
@@ -194,7 +216,12 @@ async def analyze_video(
             confidence=confidence,
             risk_score=risk_score,
             average_risk_score=round(risk_score, 2),
+            prediction={
+                "fake_probability": risk_score / 100.0,
+                "real_probability": 1.0 - (risk_score / 100.0)
+            },
             frame_analysis=frame_analyses,
+            signals=signals,
             temporal_consistency="HIGH" if classification == 'AUTHENTIC' else "LOW",
             audio_analysis=audio_result,
             explanation=Explanation(**explanation_result),

@@ -1,0 +1,223 @@
+/* AgeEstimatePage.css - Simple Layout */
+
+.age-page {
+    min-height: 100vh;
+    padding: 2rem;
+    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+}
+
+.age-page .container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    margin-bottom: 1rem;
+}
+
+.page-header h1 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 2rem;
+    color: #ff9800;
+}
+
+/* Main 3-column layout */
+.main-content {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.upload-box,
+.webcam-box,
+.results-box {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    min-width: 280px;
+    flex: 1;
+    max-width: 350px;
+}
+
+.upload-box h3,
+.webcam-box h3,
+.results-box h3 {
+    color: white;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+/* Upload area */
+.upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.3s;
+}
+
+.upload-area:hover {
+    border-color: #ff9800;
+    background: rgba(255, 152, 0, 0.1);
+}
+
+.upload-area span {
+    margin-top: 0.5rem;
+}
+
+/* Video area */
+.video-area {
+    width: 100%;
+    height: 200px;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.video-area video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+}
+
+/* Webcam controls */
+.webcam-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-start,
+.btn-capture,
+.btn-stop {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-start {
+    background: linear-gradient(135deg, #ff9800, #ff5722);
+    color: white;
+}
+
+.btn-capture {
+    background: linear-gradient(135deg, #00d9ff, #00ff88);
+    color: #0a0a0f;
+}
+
+.btn-stop {
+    background: rgba(255, 107, 107, 0.3);
+    color: #ff6b6b;
+}
+
+/* Results */
+.captured-preview {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 1rem;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 152, 0, 0.5);
+}
+
+.captured-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.loading {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 2rem;
+}
+
+.loading .spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.error {
+    background: rgba(255, 107, 107, 0.2);
+    color: #ff6b6b;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.age-result {
+    text-align: center;
+    padding: 1rem;
+}
+
+.age-number {
+    font-size: 4rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ff9800, #ff5722);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.age-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.age-range,
+.age-group {
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 900px) {
+    .main-content {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .upload-box,
+    .webcam-box,
+    .results-box {
+        max-width: 100%;
+        width: 100%;
+    }
+}

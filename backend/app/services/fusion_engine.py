@@ -135,22 +135,29 @@ class FusionEngine:
         
         # Ensemble Strategy: Visual (0.6) + Forensic (0.4)
         
-        # Visual signal (Xception)
+        # Visual signal (ViT) - FIXED: uses 'prediction' key, not 'overall_prediction'
         has_visual = False
-        if visual_result and visual_result.get('overall_prediction'):
-            pred = visual_result['overall_prediction']
+        if visual_result:
+            # First try to use pre-calculated fake_probability from ViT
+            pred = visual_result.get('prediction', {})
             if 'fake_probability' in pred:
                 signals['visual'] = pred['fake_probability']
-                weights['visual'] = 0.6
+                weights['visual'] = 0.7  # Higher weight since ViT is the primary detector
+                has_visual = True
+            # Fallback: use risk_score directly
+            elif 'risk_score' in visual_result:
+                signals['visual'] = visual_result['risk_score'] / 100.0
+                weights['visual'] = 0.7
                 has_visual = True
         
         # Forensic signal
         has_forensic = False
         if forensic_result and forensic_result.get('prediction'):
             pred = forensic_result['prediction']
-            if 'fake_probability' in pred:
+            if 'fake_probability' in pred and pred['fake_probability'] != 0.5:
+                # Only use forensic if it's not the neutral default (model loaded)
                 signals['forensic'] = pred['fake_probability']
-                weights['forensic'] = 0.4 if has_visual else 1.0
+                weights['forensic'] = 0.3 if has_visual else 1.0
                 has_forensic = True
                 
         # Fallback if visual failed

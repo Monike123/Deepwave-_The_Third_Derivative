@@ -18,7 +18,9 @@ from app.services.forensic_analyzer import forensic_analyzer
 from app.services.audio_detector import audio_detector
 from app.services.fusion_engine import fusion_engine
 from app.services.advanced_analytics import advanced_analytics
+from app.services.nvidia_hive import nvidia_hive
 from app.models.response import HealthResponse
+from app.database.connection import Database
 
 # Configure logging
 logging.basicConfig(
@@ -52,18 +54,28 @@ async def lifespan(app: FastAPI):
     
     # Advanced Analytics (HuggingFace)
     advanced_loaded = advanced_analytics.load()
-    logger.info(f"  Advanced Analytics: {'✓' if advanced_loaded else '✗ (HF_TOKEN not set)'}")
+    logger.info(f"  Advanced Analytics (HF): {'✓' if advanced_loaded else '✗ (HF_TOKEN not set)'}")
+    
+    # NVIDIA Hive (Enhanced AI)
+    nvidia_loaded = nvidia_hive.load()
+    logger.info(f"  NVIDIA Hive (Enhanced): {'✓' if nvidia_loaded else '✗ (NVIDIA_API_KEY not set)'}")
     
     logger.info("=" * 50)
     logger.info(f"Models directory: {settings.MODELS_DIR}")
     logger.info(f"GPU enabled: {settings.USE_GPU}")
     logger.info("=" * 50)
+    # Connect to MongoDB
+    db_connected = await Database.connect()
+    logger.info(f"  MongoDB: {'✓ Connected' if db_connected else '✗ (Not available - running without storage)'}")
+    
     logger.info("API Ready!")
     logger.info(f"Docs: http://localhost:{settings.API_PORT}/docs")
     logger.info("=" * 50)
     
     yield
     
+    # Cleanup
+    await Database.disconnect()
     logger.info("Shutting down Deepfake Detection API...")
 
 
@@ -94,10 +106,20 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+# CORS Configuration
+origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:5174",  # New Vite port
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "*" # Permissive for easy dev testing
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=["*"], # Allow all for now to fix connection
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -107,6 +129,7 @@ app.add_middleware(
 # Request timing middleware
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
+    print(f"DEBUG: Middleware received request: {request.url} Method: {request.method}", flush=True)
     start_time = time.time()
     response = await call_next(request)
     process_time = time.time() - start_time
