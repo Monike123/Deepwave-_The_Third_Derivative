@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Github, Twitter, Linkedin, Mail, Shield, Zap, Video, Cpu, Brain, Lock, Globe, Sparkles, Users, Cake, UserCheck, AlertTriangle, X } from 'lucide-react';
+import { ArrowRight, Github, Linkedin, Mail, Shield, Zap, Video, Cpu, Brain, Lock, Globe, Sparkles, Users, Cake, UserCheck, AlertTriangle, X } from 'lucide-react';
 import AnimatedOrbs from '../components/AnimatedOrbs';
 import FeatureCard from '../components/FeatureCard';
 import StatCard from '../components/StatCard';
@@ -70,10 +70,10 @@ const features = [
 
 // Stats data
 const stats = [
-    { number: 'Fast', label: 'Detection Speed' },
-    { number: '<1s', label: 'Processing Time' },
-    { number: '3+', label: 'AI Models' },
-    { number: 'Secure', label: 'Privacy Protected' },
+    { number: '99.4%', label: 'Image accuracy' },
+    { number: '4', label: 'Detection engines' },
+    { number: '3', label: 'Media types' },
+    { number: '0.999', label: 'ROC-AUC' },
 ];
 
 // Solutions data - NEW
@@ -159,11 +159,11 @@ export default function HomePage() {
                     {/* Main Heading */}
                     <motion.h1
                         variants={itemVariants}
-                        className="text-5xl md:text-7xl font-bold text-center mb-6 leading-tight"
+                        className="glitch-title text-4xl md:text-6xl font-bold text-center mb-6 leading-tight"
                     >
-                        AI-Powered{' '}
-                        <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-orange-400 bg-clip-text text-transparent">
-                            Biometric Platform
+                        DEEPWAY //{' '}
+                        <span className="bg-gradient-to-r from-cyan-300 via-fuchsia-400 to-lime-300 bg-clip-text text-transparent">
+                            Media Forensics Engine
                         </span>
                     </motion.h1>
 
@@ -336,7 +336,7 @@ export default function HomePage() {
                         <h2 className="text-4xl md:text-5xl font-bold mb-4">
                             Why Choose{' '}
                             <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                                Deepwave?
+                                Deepway?
                             </span>
                         </h2>
                         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
@@ -400,26 +400,23 @@ export default function HomePage() {
                     <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                         <div className="flex items-center gap-2">
                             <Shield className="w-6 h-6 text-cyan-400" />
-                            <span className="text-xl font-bold">Deepwave</span>
+                            <span className="text-xl font-bold tracking-[0.16em]">DEEPWAY</span>
                         </div>
 
                         <div className="flex gap-6">
-                            <a href="https://github.com/Monike123/Deepwave-_The_Third_Derivative" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-cyan-400 transition-colors">
+                            <a href="https://github.com/Monike123/Deepway" target="_blank" rel="noopener noreferrer" aria-label="Deepway on GitHub" className="text-gray-400 hover:text-cyan-400 transition-colors">
                                 <Github className="w-5 h-5" />
                             </a>
-                            <a href="#" className="text-gray-400 hover:text-cyan-400 transition-colors">
-                                <Twitter className="w-5 h-5" />
-                            </a>
-                            <a href="#" className="text-gray-400 hover:text-cyan-400 transition-colors">
+                            <a href="https://www.linkedin.com/in/manas-sawant-7b1332283/" target="_blank" rel="noopener noreferrer" aria-label="Manas Sawant on LinkedIn" className="text-gray-400 hover:text-cyan-400 transition-colors">
                                 <Linkedin className="w-5 h-5" />
                             </a>
-                            <a href="#" className="text-gray-400 hover:text-cyan-400 transition-colors">
+                            <a href="mailto:manassawan5913@gmail.com" aria-label="Email manassawan5913@gmail.com" className="text-gray-400 hover:text-cyan-400 transition-colors">
                                 <Mail className="w-5 h-5" />
                             </a>
                         </div>
 
                         <p className="text-gray-500 text-sm">
-                            © 2026 Deepwave. All rights reserved.
+                            © 2026 Deepway. All rights reserved.
                         </p>
                     </div>
                 </div>

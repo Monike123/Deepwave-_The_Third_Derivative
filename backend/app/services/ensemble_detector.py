@@ -2,7 +2,13 @@
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
-from torchvision.models import xception, Xception_Weights, efficientnet_b7, EfficientNet_B7_Weights
+# Xception was removed from torchvision. This module is unused by the API.
+try:
+    from torchvision.models import xception, Xception_Weights
+except ImportError:  # pragma: no cover
+    xception = None
+    Xception_Weights = None
+from torchvision.models import efficientnet_b7, EfficientNet_B7_Weights
 import numpy as np
 import cv2
 from typing import Dict, Any, Optional, List

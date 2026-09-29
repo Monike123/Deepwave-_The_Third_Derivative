@@ -20,13 +20,13 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
     ]
     
-    # Model Paths - Updated to use the Models folder
-    MODELS_DIR: Path = Path(__file__).parent.parent.parent / "Models"
-    VISUAL_DETECTOR_PATH: str = "visual_detector.onnx"
-    FORENSIC_CLASSIFIER_PATH: str = "forensic_classifier.onnx"
-    FORENSIC_SCALER_PATH: str = "forensic_scaler.pkl"
+    # Model Paths. Override MODELS_DIR in the environment to point elsewhere.
+    # Resolved default is <repo>/Models (parent of the backend package).
+    MODELS_DIR: Path = Path(__file__).resolve().parent.parent.parent / "Models"
+    VISUAL_DETECTOR_PATH: str = "best_deepfake_model.pt"
+    FORENSIC_MODEL_PATH: str = "forensic_best.pth"
     AUDIO_DETECTOR_PATH: str = "audio_detector.onnx"
-    TEMPORAL_DETECTOR_PATH: str = "temporal_deepfake_detector.onnx"
+    TEMPORAL_DETECTOR_PATH: str = "Temporal_deepfake_Video.onnx"
     
     # Processing
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB

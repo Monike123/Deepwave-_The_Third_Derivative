@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import AnalyzePage from './pages/AnalyzePage';
+import PerformancePage from './pages/PerformancePage';
 // NEW: Biometric services pages
 import FaceMatchPage from './pages/FaceMatchPage';
 import LivenessPage from './pages/LivenessPage';
@@ -17,6 +18,7 @@ function App() {
                     <Routes>
                         <Route path="/" element={<HomePage />} />
                         <Route path="/analyze" element={<AnalyzePage />} />
+                        <Route path="/performance" element={<PerformancePage />} />
                         {/* NEW: Biometric services routes */}
                         <Route path="/face-match" element={<FaceMatchPage />} />
                         <Route path="/liveness" element={<LivenessPage />} />

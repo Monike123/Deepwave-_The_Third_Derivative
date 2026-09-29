@@ -58,7 +58,9 @@ class VisualDetector:
         self.load_model()
         
     def load_model(self) -> bool:
-        """Load the ViT model and custom-trained weights."""
+        """Load the ViT model and custom-trained weights. A second call is a no-op."""
+        if self._loaded and self.model is not None:
+            return True
         try:
             pt_path = os.path.join(self.models_dir, self.MODEL_FILE)
             if not os.path.exists(pt_path):

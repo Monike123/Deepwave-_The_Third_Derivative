@@ -53,16 +53,22 @@ env/
 *.tflite
 *.bin
 
-# Model directories (keep placeholders)
+# Model directories (weights stay local; Models/README.md is tracked)
 backend/data/models/*.onnx
 backend/data/models/*.pt
 backend/data/models/*.weights
-Models/*.onnx.data
+Models/*
+!Models/README.md
 Models.zip
+Plots_*/
 
 # ============ Data & Uploads ============
-backend/data/uploads/
-backend/data/temp/
+backend/data/
+backend/*.json
+*.docx
+test_image.jpg
+deepfake-detector-enhanced/
+.cursor/
 *.mp4
 *.avi
 *.mov
@@ -101,6 +107,9 @@ yarn-error.log*
 # Build outputs
 frontend/dist/
 frontend/build/
+frontend/vite.config.js
+frontend/vite.config.d.ts
+*.tsbuildinfo
 
 # ============ Jupyter Notebooks ============
 .ipynb_checkpoints/

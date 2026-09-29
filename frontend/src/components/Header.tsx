@@ -8,6 +8,13 @@ export default function Header() {
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        fetch('/health')
+            .then((res) => setApiOnline(res.ok))
+            .catch(() => setApiOnline(false));
+    }, []);
 
     // Handle scroll for header background change
     useEffect(() => {
@@ -43,8 +50,8 @@ export default function Header() {
                         <ShieldCheck className="w-8 h-8 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
                         <div className="absolute inset-0 bg-cyan-400/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
                     </motion.div>
-                    <span className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                        Deepwave
+                    <span className="text-xl font-bold tracking-[0.18em] text-cyan-300">
+                        DEEPWAY
                     </span>
                 </Link>
 
@@ -56,13 +63,20 @@ export default function Header() {
                     <NavLink to="/analyze" active={location.pathname === '/analyze'}>
                         Analyze
                     </NavLink>
+                    <NavLink to="/performance" active={location.pathname === '/performance'}>
+                        Performance
+                    </NavLink>
+                    <span className={`status-pill ${apiOnline ? '' : 'offline'}`}>
+                        <span className="dot" />
+                        {apiOnline === null ? 'LINK' : apiOnline ? 'SYS ONLINE' : 'SYS OFFLINE'}
+                    </span>
 
                     {/* CTA Button */}
                     <Link to="/analyze">
                         <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className="ml-4 px-5 py-2.5 rounded-xl font-medium text-sm bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all duration-300 flex items-center gap-2"
+                            className="ml-4 min-h-11 px-5 py-2 rounded-xl font-medium text-sm bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 active:scale-95 transition-all duration-200 flex items-center gap-2"
                         >
                             <Sparkles className="w-4 h-4" />
                             Start Free
@@ -71,10 +85,11 @@ export default function Header() {
 
                     {/* GitHub Link */}
                     <a
-                        href="https://github.com/Monike123/Deepwave-_The_Third_Derivative"
+                        href="https://github.com/Monike123/Deepway"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="ml-2 p-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300"
+                        aria-label="Deepway on GitHub"
+                        className="ml-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-300 hover:text-white hover:bg-white/10 active:bg-white/15 transition-all duration-200"
                     >
                         <Github className="w-5 h-5" />
                     </a>
@@ -115,8 +130,15 @@ export default function Header() {
                             >
                                 Analyze
                             </MobileNavLink>
+                            <MobileNavLink
+                                to="/performance"
+                                active={location.pathname === '/performance'}
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Performance
+                            </MobileNavLink>
                             <a
-                                href="https://github.com/Monike123/Deepwave-_The_Third_Derivative"
+                                href="https://github.com/Monike123/Deepway"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-2 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-all"

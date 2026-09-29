@@ -1,0 +1,120 @@
+/* Deepway HUD layer. Tokens live in index.css. */
+
+h1, h2, h3, .page-title, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.04em;
+}
+
+a:focus-visible,
+button:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.glitch-title {
+    position: relative;
+    text-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+}
+
+.hud-frame,
+.upload-card,
+.results-card,
+.upload-container,
+.face-match-page .upload-section {
+    position: relative;
+    border: 1px solid rgba(0, 240, 255, 0.28);
+    box-shadow: inset 0 0 24px rgba(0, 240, 255, 0.04), var(--shadow-card);
+}
+
+.hud-frame::before,
+.upload-card::before,
+.results-card::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    pointer-events: none;
+    background:
+        linear-gradient(var(--color-primary), var(--color-primary)) left top / 14px 2px no-repeat,
+        linear-gradient(var(--color-primary), var(--color-primary)) left top / 2px 14px no-repeat,
+        linear-gradient(var(--color-primary), var(--color-primary)) right top / 14px 2px no-repeat,
+        linear-gradient(var(--color-primary), var(--color-primary)) right top / 2px 14px no-repeat,
+        linear-gradient(var(--color-primary), var(--color-primary)) left bottom / 14px 2px no-repeat,
+        linear-gradient(var(--color-primary), var(--color-primary)) left bottom / 2px 14px no-repeat,
+        linear-gradient(var(--color-primary), var(--color-primary)) right bottom / 14px 2px no-repeat,
+        linear-gradient(var(--color-primary), var(--color-primary)) right bottom / 2px 14px no-repeat;
+}
+
+.dropzone {
+    animation: hud-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes hud-pulse {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.25), inset 0 0 20px rgba(0, 240, 255, 0.04); }
+    50% { box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.7), inset 0 0 28px rgba(0, 240, 255, 0.12); }
+}
+
+.meter-fill {
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.55);
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid rgba(57, 255, 20, 0.45);
+    color: var(--color-success);
+    font-family: var(--font-body);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.status-pill.offline {
+    border-color: rgba(255, 59, 59, 0.5);
+    color: var(--color-danger);
+}
+
+.status-pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+}
+
+.perf-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.confusion {
+    display: grid;
+    grid-template-columns: 88px repeat(3, 1fr);
+    gap: 4px;
+    font-size: 0.8rem;
+}
+
+.confusion div {
+    padding: 0.55rem;
+    text-align: center;
+    background: rgba(0, 240, 255, 0.05);
+    border: 1px solid rgba(0, 240, 255, 0.12);
+}
+
+.confusion .hit {
+    color: var(--color-success);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dropzone,
+    .scan-line,
+    .animate-ping {
+        animation: none !important;
+    }
+}

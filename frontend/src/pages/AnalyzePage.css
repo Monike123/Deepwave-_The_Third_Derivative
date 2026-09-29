@@ -551,3 +551,233 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(0, 217, 255, 0.2);
 }
+
+/* ========================================
+   ENHANCED REPORT SECTION STYLES
+   ======================================== */
+
+.enhanced-report-section {
+    margin-top: 2rem;
+    animation: slide-up 0.6s ease;
+}
+
+.analysis-summary-card {
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.summary-icon {
+    font-size: 1.5rem;
+}
+
+.summary-header h4 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #f8fafc;
+}
+
+.summary-content p {
+    margin: 0;
+    line-height: 1.8;
+    color: #94a3b8;
+}
+
+.summary-content strong {
+    color: #f8fafc;
+}
+
+.text-green {
+    color: #10b981 !important;
+    font-weight: 600;
+}
+
+.text-red {
+    color: #ef4444 !important;
+    font-weight: 600;
+}
+
+/* Probability Chart Section */
+.probability-chart-section {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-title {
+    margin: 0 0 1.25rem 0;
+    font-size: 1.1rem;
+    color: #f8fafc;
+    font-weight: 600;
+}
+
+.probability-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.prob-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 60px;
+    align-items: center;
+    gap: 1rem;
+}
+
+.prob-label {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.prob-bar-track {
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.prob-bar-fill {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 1s ease;
+    position: relative;
+}
+
+.prob-bar-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+}
+
+.prob-bar-fill.real {
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+}
+
+.prob-bar-fill.fake {
+    background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+}
+
+.prob-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f8fafc;
+    text-align: right;
+}
+
+/* Detection Methods Section */
+.detection-methods-section {
+    margin-bottom: 1.5rem;
+}
+
+.methods-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .methods-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.method-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.method-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(0, 217, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.method-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.method-card h5 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #f8fafc;
+    font-weight: 600;
+}
+
+.method-card p {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.method-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 2rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.method-status.active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Technical Details Section */
+.technical-details-section {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1.5rem;
+}
+
+.tech-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .tech-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tech-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.tech-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tech-value {
+    font-size: 1rem;
+    color: #f8fafc;
+    font-weight: 600;
+}

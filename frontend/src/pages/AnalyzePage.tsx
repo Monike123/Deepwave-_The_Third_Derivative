@@ -13,6 +13,7 @@ interface AnalysisResult {
     };
     faces_detected?: number;
     prediction_time?: number;
+    filename?: string;
     signals?: {
         nvidia_hive?: {
             risk_score: number;
@@ -139,7 +140,7 @@ export default function AnalyzePage() {
     return (
         <div className="analyze-page min-h-screen text-white">
             <div className="container mx-auto px-4 py-8">
-                <h1 className="page-title">Deepfake Analysis</h1>
+                <h1 className="page-title glitch-title">DEEPWAY // SIGNAL ANALYSIS</h1>
 
                 {loading ? (
                     <div className="animate-fade-in">
@@ -359,6 +360,108 @@ export default function AnalyzePage() {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* NEW: Enhanced Analysis Report Section */}
+                                <div className="enhanced-report-section">
+                                    <h3 className="subsection-title">📊 Detailed Analysis Breakdown</h3>
+
+                                    {/* Analysis Summary Card */}
+                                    <div className="analysis-summary-card">
+                                        <div className="summary-header">
+                                            <span className="summary-icon">🔍</span>
+                                            <h4>Analysis Summary</h4>
+                                        </div>
+                                        <div className="summary-content">
+                                            <p>
+                                                <strong>File Analyzed:</strong> {result.filename || 'Unknown'}<br />
+                                                <strong>Processing Time:</strong> {result.processing_time_ms}ms<br />
+                                                <strong>Detection Result:</strong> <span className={result.classification === 'AUTHENTIC' ? 'text-green' : 'text-red'}>{result.classification}</span><br />
+                                                <strong>Confidence Level:</strong> {result.confidence}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Probability Distribution Chart */}
+                                    <div className="probability-chart-section">
+                                        <h4 className="chart-title">📈 Class Probability Distribution</h4>
+                                        <div className="probability-bars">
+                                            <div className="prob-row">
+                                                <span className="prob-label">Real / Authentic</span>
+                                                <div className="prob-bar-track">
+                                                    <div
+                                                        className="prob-bar-fill real"
+                                                        style={{ width: `${(result.prediction.real_probability * 100)}%` }}
+                                                    ></div>
+                                                </div>
+                                                <span className="prob-value">{(result.prediction.real_probability * 100).toFixed(1)}%</span>
+                                            </div>
+                                            <div className="prob-row">
+                                                <span className="prob-label">Fake / Manipulated</span>
+                                                <div className="prob-bar-track">
+                                                    <div
+                                                        className="prob-bar-fill fake"
+                                                        style={{ width: `${(result.prediction.fake_probability * 100)}%` }}
+                                                    ></div>
+                                                </div>
+                                                <span className="prob-value">{(result.prediction.fake_probability * 100).toFixed(1)}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Detection Methods Used */}
+                                    <div className="detection-methods-section">
+                                        <h4 className="chart-title">🔬 Detection Methods Used</h4>
+                                        <div className="methods-grid">
+                                            <div className="method-card">
+                                                <div className="method-icon">🧠</div>
+                                                <h5>Visual AI (ViT)</h5>
+                                                <p>Vision Transformer analyzes visual patterns, textures, and facial features to detect AI-generated content and face swaps.</p>
+                                                <span className="method-status active">Active</span>
+                                            </div>
+                                            <div className="method-card">
+                                                <div className="method-icon">📡</div>
+                                                <h5>Forensic Analysis</h5>
+                                                <p>Frequency domain analysis detects compression artifacts, GAN fingerprints, and upsampling patterns invisible to humans.</p>
+                                                <span className="method-status active">Active</span>
+                                            </div>
+                                            <div className="method-card">
+                                                <div className="method-icon">🎯</div>
+                                                <h5>ELA Detection</h5>
+                                                <p>Error Level Analysis reveals inconsistencies in JPEG compression that indicate edited or spliced regions.</p>
+                                                <span className="method-status active">Active</span>
+                                            </div>
+                                            <div className="method-card">
+                                                <div className="method-icon">🔄</div>
+                                                <h5>Ensemble Fusion</h5>
+                                                <p>Multiple AI models vote together to provide robust, high-confidence detection results.</p>
+                                                <span className="method-status active">Active</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Technical Details */}
+                                    <div className="technical-details-section">
+                                        <h4 className="chart-title">⚙️ Technical Details</h4>
+                                        <div className="tech-grid">
+                                            <div className="tech-item">
+                                                <span className="tech-label">Model Architecture</span>
+                                                <span className="tech-value">ViT-Base-Patch16-224</span>
+                                            </div>
+                                            <div className="tech-item">
+                                                <span className="tech-label">Forensic Method</span>
+                                                <span className="tech-value">FFT + Radial PSD</span>
+                                            </div>
+                                            <div className="tech-item">
+                                                <span className="tech-label">Risk Assessment</span>
+                                                <span className="tech-value">{result.risk_score.toFixed(1)}% Risk Score</span>
+                                            </div>
+                                            <div className="tech-item">
+                                                <span className="tech-label">Analysis Type</span>
+                                                <span className="tech-value">Multi-Modal Ensemble</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </>

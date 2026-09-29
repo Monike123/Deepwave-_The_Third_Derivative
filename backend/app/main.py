@@ -4,6 +4,10 @@ Deepfake Detection API - Main Application
 
 FastAPI application for detecting deepfake images, videos, and synthetic audio.
 """
+# Load .env FIRST before any other imports use os.environ
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -129,7 +133,6 @@ app.add_middleware(
 # Request timing middleware
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
-    print(f"DEBUG: Middleware received request: {request.url} Method: {request.method}", flush=True)
     start_time = time.time()
     response = await call_next(request)
     process_time = time.time() - start_time

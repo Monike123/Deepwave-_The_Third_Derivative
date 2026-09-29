@@ -25,12 +25,8 @@ class AudioDetectorService:
         
     def load_model(self) -> bool:
         """Load audio detector ONNX model."""
-        model_path = settings.MODELS_DIR / settings.AUDIO_DETECTOR_PATH
-        
-        # Try alternative path
-        if not model_path.exists():
-            model_path = Path("d:/Deepway/Models") / settings.AUDIO_DETECTOR_PATH
-        
+        model_path = Path(settings.MODELS_DIR) / settings.AUDIO_DETECTOR_PATH
+
         if not model_path.exists():
             logger.warning(f"Audio detector model not found at {model_path} (CWD: {Path.cwd()})")
             return False
